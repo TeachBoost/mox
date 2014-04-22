@@ -8,19 +8,21 @@ rootpath="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )";
 apppath="$rootpath/../../app";
 buildpath="$rootpath/../../build";
 
+if ! [[ -f "$rootpath/../config" ]] ; then
+    echo "config file not found! please run ./etc/bin/configure.sh <profile>";
+    exit 0
+fi
+
+# read in environment config
+. $rootpath/../defaults
+. $rootpath/../config
+
 mkdir -p $apppath
 mkdir -p $apppath/{base,modules}
 mkdir -p $apppath/base/{images,lib,styles,views}
 touch $apppath/base/styles/index.less
 mkdir -p $buildpath/public
 mkdir -p $buildpath/public/{css,fonts,img,js}
-
-# set up module directories
-modulefile="$rootpath/../modules"
-IFS=$'\r\n' modules=($(cat $modulefile))
-
-# read in environment config
-. $rootpath/../config
 
 for module in "${modules[@]}"
 do

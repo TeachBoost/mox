@@ -18,14 +18,14 @@ fi
 
 # get flags
 debug=""
-minify=0
+minify=""
 while getopts ":dm" opt; do
     case $opt in
         d)
             debug="--debug"
             ;;
         m)
-            minify=1
+            minify="-t [ uglifyify -x .js ]"
             ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
@@ -45,15 +45,8 @@ modulepath="$rootpath/../../app/modules";
 buildpath="$rootpath/../../build/public";
 vendorpath="$rootpath/../../vendor";
 
-# read module names from ./modules and put them into an array
-modulefile="$rootpath/../modules"
-IFS=$'\r\n' modules=($(cat $modulefile))
-
-### @TODO
-### read in the command/options for the browserify base
-### and modules, handle minification
-
 # read in environment config
+. $rootpath/../defaults
 . $rootpath/../config
 
 # create buildpath if it doesn't exist
@@ -61,33 +54,43 @@ mkdir -p $buildpath/js
 mkdir -p $buildpath/css
 
 # if base was requested just write that out
-if [ $module == "base" ] ; then
+if [[ $module == "base" || $module == "all" ]] ; then
     # write the base javascript
-    if [[ $minify == 0 ]] ; then
-        browserify $debug -o $buildpath/js/base.js
-    else
-        browserify $debug -o $buildpath/js/base.js
-    fi
+    buildModules=()
+    out="-o $buildpath/js/base.js"
+    cmd=( "browserify" "$debug" "${browserifyBase[@]}" "$minify" "$out" )
+    eval ${cmd[@]}
 
-    ### @TODO
-    ### 1. copy over any vendor files specified in the config
-    ### 2. cat any css files (in order) specified in the config
-    ###    into the base.css
+    # copy any JS files
+    for jsFile in "${!buildBaseJs[@]}" ; do
+        buildFilename="${buildBaseJs["$jsFile"]}"
+        cp $vendorpath/$jsFile $buildpath/$buildFilename
+    done
+
+    # prepend any css files
+    for cssFile in "${buildBaseCss[@]}" ; do
+        echo -n "" > $buildpath/css/base.css
+        cat $vendorpath/$cssFile >> $buildpath/css/base.css
+    done
 
     # less compile the less files
     lessc $basepath/styles/index.less >> $buildpath/css/base.css
-elif [ $module == "all" ] ; then
-    baseModule=( 'base' )
-    buildModules=("${baseModule[@]}" "${modules[@]}")
 else
-    buildModules=( $module );
+    buildModules=( $module )
+fi
+
+if [ $module == "all" ] ; then
+    buildModules=("${modules[@]}")
 fi
 
 # iterate through modules and write them out
 for mod in "${buildModules[@]}"
 do
     # write the module javascript bundle
-    browserify $debug -e $modulepath/$mod/index.js -o $buildpath/js/$mod.js
+    entry="-e $modulepath/$mod/index.js"
+    out="-o $buildpath/js/$mod.js"
+    cmd=( "browserify" "$debug" "$entry" "${browserifyModule[@]}" "$minify" "$out" )
+    eval ${cmd[@]}
 
     # write the module CSS
     if [[ -d "$modulepath/$mod/styles" && -f "$modulepath/$mod/styles/index.less" ]] ; then

@@ -20,6 +20,7 @@ modulepath="$rootpath/../../app/modules";
 buildpath="$rootpath/../../build/public";
 
 # read in environment config
+. $rootpath/../defaults
 . $rootpath/../config
 
 ### @TODO

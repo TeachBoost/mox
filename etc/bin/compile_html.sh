@@ -8,17 +8,14 @@
 rootpath="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )";
 template="$rootpath/../template.shtml";
 
-# read module names from ./modules and put them into an array
-modulefile="$rootpath/../modules";
-IFS=$'\r\n' modules=($(cat $modulefile))
-
 # read in environment config
+. $rootpath/../defaults
 . $rootpath/../config
 
 for module in "${modules[@]}"
 do
     mkdir -p $rootpath/../../app/modules/$module
-    title='TeachBoost Forms';
+    title='';
     outputFile="$rootpath/../../build/$module/index.html";
     echo "Writing app/modules/$module/index.html"
 

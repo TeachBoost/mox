@@ -1,6 +1,3 @@
-# stem used for history polyfill
-historyBasePath="/project"
-
 # path for api calls
 apiPath="http://api.mishra.com"
 
@@ -12,9 +9,6 @@ basePath="http://mishra.com/project"
 
 # path for assets
 assetPath="http://mishra.com/project"
-
-# using htaccess?
-useHtaccess="no"
 
 # using asset versioning?
 useAssetVersion="yes"

@@ -1,3 +1,5 @@
+app/base
+app/modules
 build
 vendor
 node_modules

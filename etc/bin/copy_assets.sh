@@ -9,9 +9,9 @@ apppath="$rootpath/../../app";
 vendorpath="$rootpath/../../vendor";
 buildpath="$rootpath/../../build";
 
-# read module names from ./modules and put them into an array
-modulefile="$rootpath/../modules"
-IFS=$'\r\n' modules=($(cat $modulefile))
+# read in environment config
+. $rootpath/../defaults
+. $rootpath/../config
 
 # create buildpath if it doesn't exist
 mkdir -p $buildpath/public/img
@@ -30,9 +30,14 @@ do
     fi
 done
 
-###
-### Add commands to copy files from your vendor path
-### to your public directories. This is where you would
-### copy your bootstrap fonts, fontawesome fonts, vendor
-### images and assets.
-###
+# copy over images
+for imgDir in "${!buildBaseImg[@]}" ; do
+    vendorDir="${buildBaseImg["$imgDir"]}"
+    mkdir -p $buildpath/public/img/$imgDir
+    cp $vendorpath/$vendorDir/* $buildpath/public/img/$imgDir/
+done
+
+# copy over fonts
+for fontFile in "${buildBaseFont[@]}" ; do
+    cp $vendorpath/$fontFile $buildpath/public/fonts/
+done

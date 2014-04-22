@@ -17,9 +17,11 @@ Get the node and bower packages:
     npm install
     bower install
 
-Run the init script to set up your environment:
+Run the init scripts to set up your environment:
 
-    npm run init
+    # ./etc/bin/configure.sh <environment>
+    $> ./etc/bin/configure.sh local
+    $> ./etc/bin/init.sh
 
 Finally, routing is handled through server rewrites and those
 need to be copied to your nginx/apache config. Both nginx and
@@ -33,7 +35,7 @@ you're using Apache, put the `.htaccess` file in `build/`.
 To build the javascript/stylesheets for a specific module:
 
     # ./etc/bin/build.sh <module>
-    $> .etc/bin/build.sh home
+    $> ./etc/bin/build.sh home
 
 To build the base bundles:
 
@@ -41,7 +43,7 @@ To build the base bundles:
 
 To compile the CSS/JS for all modules
 
-    $> ./etc/bin/build.sh
+    $> ./etc/bin/build.sh all
 
 ## CSS Compilation
 

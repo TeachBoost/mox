@@ -2,6 +2,7 @@
     "name" : "Mox",
     "description" : "Common libraries for front-end projects",
     "author" : "Mike Gioia <mike@teachboost.com>",
+    "license" : "ISC", 
     "dependencies" : {
         "jquery-browserify" : "*",
         "bootstrap-browserify" : "*",

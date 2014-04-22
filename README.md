@@ -1,8 +1,7 @@
-# Mishra
+# Mox
 
-Mishra is a front-end project template for building applications
-with Browserify and Node modules. It is an opinionated structure
-that allows great flexibility and easy compilation. 
+Mox is a collection of the common libraries used throughout
+all front-end projects.
 
 ## Dependencies
 

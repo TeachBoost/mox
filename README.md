@@ -8,20 +8,26 @@ that allows great flexibility and easy compilation.
 
 The following node modules are required globally:
 
-    sudo npm install -g bower browserify watchify less gulp path gulp-less
+```bash
+npm install -g bower browserify watchify less gulp path gulp-less
+```
 
 ## Installation
 
 Get the node and bower packages:
 
-    npm install
-    bower install
+```bash
+npm install
+bower install
+```
 
 Run the init scripts to set up your environment:
 
-    # ./etc/bin/configure.sh <environment>
-    $> ./etc/bin/configure.sh local
-    $> ./etc/bin/init.sh
+```bash
+# ./etc/bin/configure.sh <environment>
+./etc/bin/configure.sh local
+./etc/bin/init.sh
+```
 
 Finally, routing is handled through server rewrites and those
 need to be copied to your nginx/apache config. Both nginx and
@@ -34,16 +40,22 @@ you're using Apache, put the `.htaccess` file in `build/`.
 
 To build the javascript/stylesheets for a specific module:
 
-    # ./etc/bin/build.sh <module>
-    $> ./etc/bin/build.sh home
+```bash
+# ./etc/bin/build.sh <module>
+./etc/bin/build.sh home
+```
 
 To build the base bundles:
 
-    $> ./etc/bin/build.sh base
+```bash
+./etc/bin/build.sh base
+```
 
 To compile the CSS/JS for all modules
 
-    $> ./etc/bin/build.sh all
+```bash
+./etc/bin/build.sh all
+```
 
 ## CSS Compilation
 
@@ -58,8 +70,10 @@ that directory.
 module basis and it's invoked the same way as building. This
 will watch for JS changes in the specified module:
 
-    # ./etc/bin/watch.sh <module>
-    $> ./etc/bin/watch.sh home
+```bash
+# ./etc/bin/watch.sh <module>
+./etc/bin/watch.sh home
+```
 
 Currently, CSS watching isn't set up. The plan is to set up
 a gulpfile for css watching that you would run separately.

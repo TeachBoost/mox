@@ -68,8 +68,8 @@ if [[ $module == "base" || $module == "all" ]] ; then
     done
 
     # prepend any css files
+    echo -n "" > $buildpath/css/base.css
     for cssFile in "${buildBaseCss[@]}" ; do
-        echo -n "" > $buildpath/css/base.css
         cat $vendorpath/$cssFile >> $buildpath/css/base.css
     done
 

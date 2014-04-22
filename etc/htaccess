@@ -1,0 +1,8 @@
+RewriteEngine On
+
+# sample for home module
+RewriteRule     ^$                          home/index.html [L]
+
+# sample for another module
+RewriteRule     ^module/([0-9]+)$           module/index.html [L]
+RewriteRule     ^module/([0-9]+)/edit$      module/index.html [L]

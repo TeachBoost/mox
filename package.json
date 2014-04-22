@@ -1,0 +1,31 @@
+{
+    "name" : "Mishra",
+    "description" : "Front-end project template",
+    "author" : "Mike Gioia <mike@teachboost.com>",
+    "dependencies" : {},
+    "devDependencies" : {
+        "watchify" : "*",
+        "browserify" : "*",
+        "less" : "*",
+        "browserify-shim" : "*",
+        "gulp" : "*",
+        "path" : "*",
+        "gulp-less" : "*",
+        "gulp-rename" : "*",
+        "gulp-exec" : "*"
+    },
+    "browser" : {},
+    "browserify": {
+        "transform": [ 
+            "browserify-shim"
+        ]
+    },
+    "browserify-shim": {},
+    "scripts" : {
+        "init" : "./etc/bin/init.sh && ./etc/bin/compile_html.sh && ./etc/bin/copy_assets.sh && ./etc/bin/build.sh all",
+        "build" : "./etc/bin/build.sh all",
+        "build-html" : "./etc/bin/compile_html.sh",
+        "build-base" : "./etc/bin/build.sh base",
+        "copy-assets" : "./etc/bin/copy_assets.sh"
+    }
+}

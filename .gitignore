@@ -1,0 +1,6 @@
+build
+vendor
+node_modules
+npm-debug.log
+build/.htaccess
+etc/config

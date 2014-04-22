@@ -1,4 +1,4 @@
-# Misrha
+# Mishra
 
 Mishra is a front-end project template for building applications
 with Browserify and Node modules. It is an opinionated structure

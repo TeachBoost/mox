@@ -1,5 +1,10 @@
 {
-    "name" : "Mishra",
+    "name" : "Mox",
     "private" : true,
-    "dependencies" : {}
+    "dependencies" : {
+        "bootstrap" : "*",
+        "fontawesome" : "*",
+        "ui-kit" : "git@github.com:TeachBoost/ui-kit.git",
+        "simpleStorage" : "*"
+    }
 }

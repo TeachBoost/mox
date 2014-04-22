@@ -1,26 +1,69 @@
 {
-    "name" : "Mishra",
-    "description" : "Front-end project template",
+    "name" : "Mox",
+    "description" : "Common libraries for front-end projects",
     "author" : "Mike Gioia <mike@teachboost.com>",
-    "dependencies" : {},
+    "dependencies" : {
+        "jquery-browserify" : "*",
+        "bootstrap-browserify" : "*",
+        "underscore" : "*",
+        "superagent" : "*",
+        "pouchdb" : "*",
+        "page" : "*",
+        "stapes" : "*",
+        "ractify" : "*",
+        "ractive" : "*",
+        "interact" : "*",
+        "uglifyify" : "*"
+    },
     "devDependencies" : {
+        "gulp-browserify" : "*",
         "watchify" : "*",
         "browserify" : "*",
         "less" : "*",
         "browserify-shim" : "*",
+        "qunit" : "*",
         "gulp" : "*",
         "path" : "*",
         "gulp-less" : "*",
         "gulp-rename" : "*",
         "gulp-exec" : "*"
     },
-    "browser" : {},
+    "browser" : {
+        "jquery" : "jquery-browserify",
+        "bootstrap" : "bootstrap-browserify",
+        "simpleStorage" : "./vendor/simpleStorage/simpleStorage.js",
+        "notifyjs" : "./vendor/ui-kit/dist/js/notify.min.js",
+        "icheck" : "./vendor/ui-kit/dist/js/icheck.min.js",
+        "mousewheel" : "./vendor/ui-kit/dist/js/mousewheel.min.js",
+        "perfectScrollbar" : "./vendor/ui-kit/dist/js/perfectScrollbar.min.js"
+    },
     "browserify": {
-        "transform": [ 
+        "transform": [
             "browserify-shim"
         ]
     },
-    "browserify-shim": {},
+    "browserify-shim": {
+        "./vendor/ui-kit/dist/js/icheck.min.js" : {
+            "depends": [
+                "./node_modules/jquery-browserify"
+            ]
+        },
+        "./vendor/ui-kit/dist/js/notify.min.js" : {
+            "depends" : [
+                "./node_modules/jquery-browserify"
+            ]
+        },
+        "./vendor/ui-kit/dist/js/perfectScrollbar.min.js" : {
+            "depends" : [
+                "./node_modules/jquery-browserify"
+            ]
+        },
+        "./vendor/ui-kit/dist/js/mousewheel.min.js" : {
+            "depends" : [
+                "./node_modules/jquery-browserify"
+            ]
+        }
+    },
     "scripts" : {
         "build" : "./etc/bin/build.sh all",
         "build-html" : "./etc/bin/compile_html.sh",

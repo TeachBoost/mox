@@ -13,6 +13,7 @@ browserifyBase=(
     "-r mousewheel"
     "-r perfectScrollbar"
     "-r notifyjs"
+    "-r mox-interface"
     "-t ractify"
 )
 
@@ -20,16 +21,13 @@ browserifyBase=(
 #"-r storage"
 #"-r segment"
 #"-r notify"
-#"-r controller"
 #"-r model"
-#"-r interface"
 
 ### THESE NEED TO BE PORTED INTO NPM MODULES
 ### AND ADDED TO THE PACKAGE.JSON FILE
 
 #"interface" : "./app/base/lib/interface.js",
 #"model" : "./app/base/lib/model.js",
-#"controller" : "./app/base/lib/controller.js",
 #"segment" : "./app/base/lib/segment.js",
 #"request" : "./app/base/lib/request.js",
 #"storage" : "./app/base/lib/storage.js",

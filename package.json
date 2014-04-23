@@ -14,7 +14,8 @@
         "ractify" : "*",
         "ractive" : "*",
         "interact" : "*",
-        "uglifyify" : "*"
+        "uglifyify" : "*",
+        "mox-interface" : "*"
     },
     "devDependencies" : {
         "gulp-browserify" : "*",
@@ -27,7 +28,11 @@
         "path" : "*",
         "gulp-less" : "*",
         "gulp-rename" : "*",
-        "gulp-exec" : "*"
+        "gulp-exec" : "*",
+        "mocha" : "*",
+        "chai" : "*",
+        "jsdom" : "*",
+        "jquery" : "*"
     },
     "browser" : {
         "jquery" : "jquery-browserify",

@@ -14,6 +14,7 @@ browserifyBase=(
     "-r perfectScrollbar"
     "-r notifyjs"
     "-r mox-interface"
+    "-r mox-router"
     "-t ractify"
 )
 
@@ -26,7 +27,6 @@ browserifyBase=(
 ### THESE NEED TO BE PORTED INTO NPM MODULES
 ### AND ADDED TO THE PACKAGE.JSON FILE
 
-#"interface" : "./app/base/lib/interface.js",
 #"model" : "./app/base/lib/model.js",
 #"segment" : "./app/base/lib/segment.js",
 #"request" : "./app/base/lib/request.js",

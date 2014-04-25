@@ -1,8 +1,10 @@
 {
     "name" : "Mox",
+    "version" : "0.1.0",
     "description" : "Common libraries for front-end projects",
     "author" : "Mike Gioia <mike@teachboost.com>",
-    "license" : "ISC", 
+    "license" : "ISC",
+    "main" : "./dist/mox.js",
     "dependencies" : {
         "jquery-browserify" : "*",
         "bootstrap-browserify" : "*",
@@ -15,7 +17,8 @@
         "ractive" : "*",
         "interact" : "*",
         "uglifyify" : "*",
-        "mox-interface" : "*"
+        "mox-interface" : "*",
+        "mox-router" : "*"
     },
     "devDependencies" : {
         "gulp-browserify" : "*",
@@ -71,9 +74,18 @@
         }
     },
     "scripts" : {
+        "test": "mocha",
         "build" : "./etc/bin/build.sh all",
         "build-html" : "./etc/bin/compile_html.sh",
         "build-base" : "./etc/bin/build.sh base",
         "copy-assets" : "./etc/bin/copy_assets.sh"
-    }
+    },
+    "repository" : {
+        "type": "git",
+        "url": "git://github.com/TeachBoost/mox.git"
+    },
+    "bugs": {
+        "url": "https://github.com/TeachBoost/mox/issues"
+    },
+    "homepage": "https://github.com/TeachBoost/mox"
 }

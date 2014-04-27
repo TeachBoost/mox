@@ -1,4 +1,6 @@
-modules=()
+modules=(
+    "test"
+)
 browserifyBase=(
     "-r jquery"
     "-r bootstrap"
@@ -15,20 +17,12 @@ browserifyBase=(
     "-r notifyjs"
     "-r mox-interface"
     "-r mox-router"
+    "-r mox-notify"
+    "-r mox-lockscreen"
     "-t ractify"
 )
 
 #"-r request"
 #"-r storage"
 #"-r segment"
-#"-r notify"
 #"-r model"
-
-### THESE NEED TO BE PORTED INTO NPM MODULES
-### AND ADDED TO THE PACKAGE.JSON FILE
-
-#"model" : "./app/base/lib/model.js",
-#"segment" : "./app/base/lib/segment.js",
-#"request" : "./app/base/lib/request.js",
-#"storage" : "./app/base/lib/storage.js",
-#"notify" : "./app/base/lib/notify.js"

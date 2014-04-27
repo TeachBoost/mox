@@ -1,6 +1,6 @@
 {
     "name" : "Mox",
-    "version" : "0.1.1",
+    "version" : "0.1.2",
     "description" : "Common libraries for front-end projects",
     "author" : "Mike Gioia <mike@teachboost.com>",
     "license" : "ISC",

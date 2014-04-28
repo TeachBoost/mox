@@ -1,6 +1,6 @@
 {
     "name" : "Mox",
-    "version" : "0.1.3",
+    "version" : "0.2.0",
     "description" : "Common libraries for front-end projects",
     "author" : "Mike Gioia <mike@teachboost.com>",
     "license" : "ISC",
@@ -20,7 +20,8 @@
         "mox-interface" : "*",
         "mox-router" : "*",
         "mox-notify" : "*",
-        "mox-lockscreen" : "*"
+        "mox-lockscreen" : "*",
+        "mox-toolbelt" : "*"
     },
     "devDependencies" : {
         "gulp-browserify" : "*",
@@ -36,7 +37,6 @@
         "gulp-exec" : "*",
         "mocha" : "*",
         "chai" : "*",
-        "jsdom" : "*",
         "jquery" : "*"
     },
     "browser" : {

@@ -1,6 +1,6 @@
 {
     "name" : "Mox",
-    "version" : "0.2.0",
+    "version" : "0.2.1",
     "description" : "Common libraries for front-end projects",
     "author" : "Mike Gioia <mike@teachboost.com>",
     "license" : "ISC",
@@ -36,8 +36,7 @@
         "gulp-rename" : "*",
         "gulp-exec" : "*",
         "mocha" : "*",
-        "chai" : "*",
-        "jquery" : "*"
+        "chai" : "*"
     },
     "browser" : {
         "jquery" : "jquery-browserify",

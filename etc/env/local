@@ -17,12 +17,12 @@ browserifyBase=(
     "-r notifyjs"
     "-r mox-interface"
     "-r mox-router"
+    "-r mox-request"
     "-r mox-notify"
     "-r mox-lockscreen"
     "-r mox-toolbelt"
     "-t ractify"
 )
 
-#"-r request"
 #"-r storage"
 #"-r model"

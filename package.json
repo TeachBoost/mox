@@ -1,6 +1,6 @@
 {
     "name" : "Mox",
-    "version" : "0.2.1",
+    "version" : "0.2.2",
     "description" : "Common libraries for front-end projects",
     "author" : "Mike Gioia <mike@teachboost.com>",
     "license" : "ISC",
@@ -19,6 +19,7 @@
         "uglifyify" : "*",
         "mox-interface" : "*",
         "mox-router" : "*",
+        "mox-request" : "*",
         "mox-notify" : "*",
         "mox-lockscreen" : "*",
         "mox-toolbelt" : "*"

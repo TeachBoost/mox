@@ -1,52 +1,53 @@
 {
-    "name" : "Mox",
-    "version" : "0.2.2",
-    "description" : "Common libraries for front-end projects",
-    "author" : "Mike Gioia <mike@teachboost.com>",
-    "license" : "ISC",
-    "main" : "./dist/mox.js",
-    "dependencies" : {
-        "jquery-browserify" : "*",
-        "bootstrap-browserify" : "*",
-        "underscore" : "*",
-        "superagent" : "*",
-        "pouchdb" : "*",
-        "page" : "*",
-        "stapes" : "*",
-        "ractify" : "*",
-        "ractive" : "*",
-        "interact" : "*",
-        "uglifyify" : "*",
-        "mox-interface" : "*",
-        "mox-router" : "*",
-        "mox-request" : "*",
-        "mox-notify" : "*",
-        "mox-lockscreen" : "*",
-        "mox-toolbelt" : "*"
+    "name": "Mox",
+    "version": "0.3.0",
+    "description": "Common libraries for front-end projects",
+    "author": "Mike Gioia <mike@teachboost.com>",
+    "license": "ISC",
+    "main": "./dist/mox.js",
+    "dependencies": {
+        "jquery-browserify": "*",
+        "bootstrap-browserify": "*",
+        "underscore": "*",
+        "superagent": "*",
+        "pouchdb": "*",
+        "page": "*",
+        "stapes": "*",
+        "ractify": "*",
+        "ractive": "*",
+        "interact": "*",
+        "uglifyify": "*",
+        "mox-interface": "*",
+        "mox-router": "*",
+        "mox-request": "*",
+        "mox-notify": "*",
+        "mox-lockscreen": "*",
+        "mox-toolbelt": "*"
     },
-    "devDependencies" : {
-        "gulp-browserify" : "*",
-        "watchify" : "*",
-        "browserify" : "*",
-        "less" : "*",
-        "browserify-shim" : "*",
-        "qunit" : "*",
-        "gulp" : "*",
-        "path" : "*",
-        "gulp-less" : "*",
-        "gulp-rename" : "*",
-        "gulp-exec" : "*",
-        "mocha" : "*",
-        "chai" : "*"
+    "devDependencies": {
+        "gulp-browserify": "*",
+        "watchify": "*",
+        "browserify": "*",
+        "less": "*",
+        "browserify-shim": "*",
+        "qunit": "*",
+        "gulp": "*",
+        "path": "*",
+        "gulp-less": "*",
+        "gulp-rename": "*",
+        "gulp-exec": "*",
+        "mocha": "*",
+        "chai": "*"
     },
-    "browser" : {
-        "jquery" : "jquery-browserify",
-        "bootstrap" : "bootstrap-browserify",
-        "simpleStorage" : "./vendor/simpleStorage/simpleStorage.js",
-        "notifyjs" : "./vendor/ui-kit/dist/js/notify.min.js",
-        "icheck" : "./vendor/ui-kit/dist/js/icheck.min.js",
-        "mousewheel" : "./vendor/ui-kit/dist/js/mousewheel.min.js",
-        "perfectScrollbar" : "./vendor/ui-kit/dist/js/perfectScrollbar.min.js"
+    "browser": {
+        "jquery": "jquery-browserify",
+        "bootstrap": "bootstrap-browserify",
+        "ractive": "./node_modules/ractive/ractive-legacy.runtime.js",
+        "simpleStorage": "./vendor/simpleStorage/simpleStorage.js",
+        "notifyjs": "./vendor/ui-kit/dist/js/notify.min.js",
+        "icheck": "./vendor/ui-kit/dist/js/icheck.min.js",
+        "mousewheel": "./vendor/ui-kit/dist/js/mousewheel.min.js",
+        "perfectScrollbar": "./vendor/ui-kit/dist/js/perfectScrollbar.min.js"
     },
     "browserify": {
         "transform": [
@@ -54,35 +55,35 @@
         ]
     },
     "browserify-shim": {
-        "./vendor/ui-kit/dist/js/icheck.min.js" : {
+        "./vendor/ui-kit/dist/js/icheck.min.js": {
             "depends": [
                 "./node_modules/jquery-browserify"
             ]
         },
-        "./vendor/ui-kit/dist/js/notify.min.js" : {
-            "depends" : [
+        "./vendor/ui-kit/dist/js/notify.min.js": {
+            "depends": [
                 "./node_modules/jquery-browserify"
             ]
         },
-        "./vendor/ui-kit/dist/js/perfectScrollbar.min.js" : {
-            "depends" : [
+        "./vendor/ui-kit/dist/js/perfectScrollbar.min.js": {
+            "depends": [
                 "./node_modules/jquery-browserify"
             ]
         },
-        "./vendor/ui-kit/dist/js/mousewheel.min.js" : {
-            "depends" : [
+        "./vendor/ui-kit/dist/js/mousewheel.min.js": {
+            "depends": [
                 "./node_modules/jquery-browserify"
             ]
         }
     },
-    "scripts" : {
+    "scripts": {
         "test": "mocha",
-        "build" : "./etc/bin/build.sh all",
-        "build-html" : "./etc/bin/compile_html.sh",
-        "build-base" : "./etc/bin/build.sh base",
-        "copy-assets" : "./etc/bin/copy_assets.sh"
+        "build": "./etc/bin/build.sh all",
+        "build-html": "./etc/bin/compile_html.sh",
+        "build-base": "./etc/bin/build.sh base",
+        "copy-assets": "./etc/bin/copy_assets.sh"
     },
-    "repository" : {
+    "repository": {
         "type": "git",
         "url": "git://github.com/TeachBoost/mox.git"
     },

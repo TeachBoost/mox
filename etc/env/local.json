@@ -1,0 +1,64 @@
+{
+    "base": {
+        "js": {
+            "description": "VendorJS assets to copy on build; specify source-file and target build-file name.",
+            "value": []
+        },
+        "css": {
+            "description": "Vendor CSS files to prepend. All are written to base.css.",
+            "value": []
+        },
+        "img": {
+            "description": "Vendor image directory or file names to copy over.",
+            "value": []
+        },
+        "fonts": {
+            "description": "array of fonts to copy when building base, relative to the vendor path",
+            "value": []
+        },
+        "browserify": {
+            "requires": [
+                "jquery",
+                "bootstrap",
+                "underscore",
+                "superagent",
+                "pouchdb",
+                "page",
+                "simpleStorage",
+                "stapes",
+                "ractify",
+                "icheck",
+                "mousewheel",
+                "perfectScrollbar",
+                "notifyjs",
+                "mox-interface",
+                "mox-router",
+                "mox-request",
+                "mox-notify",
+                "mox-lockscreen",
+                "mox-toolbelt"
+            ],
+            "excludes": [],
+            "transforms": [
+                "ractify"
+            ],
+            "options": [
+            ]
+        }
+    },
+    "modules": {
+        "test": {
+            "description": "Module used within this application.",
+            "js": {},
+            "css": {},
+            "img": {},
+            "fonts": {},
+            "browserify": {
+                "requires": [],
+                "excludes": [],
+                "transforms": [],
+                "options": []
+            }
+        }
+    }
+}

@@ -6,3 +6,5 @@ node_modules
 npm-debug.log
 build/.htaccess
 etc/config
+etc/config.json
+.DS_Store

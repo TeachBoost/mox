@@ -1,6 +1,6 @@
 {
     "name": "Mox",
-    "version": "0.2.1",
+    "version": "0.3.0",
     "description": "Common libraries for front-end projects",
     "author": "Mike Gioia <mike@teachboost.com>",
     "license": "ISC",
@@ -21,6 +21,7 @@
         "simple-colors": "*",
         "mox-interface": "*",
         "mox-router": "*",
+        "mox-request": "*",
         "mox-notify": "*",
         "mox-lockscreen": "*",
         "mox-toolbelt": "*"
@@ -43,6 +44,7 @@
     "browser": {
         "jquery": "jquery-browserify",
         "bootstrap": "bootstrap-browserify",
+        "ractive": "./node_modules/ractive/ractive-legacy.runtime.js",
         "simpleStorage": "./vendor/simpleStorage/simpleStorage.js",
         "notifyjs": "./vendor/ui-kit/dist/js/notify.min.js",
         "icheck": "./vendor/ui-kit/dist/js/icheck.min.js",

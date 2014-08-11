@@ -55,21 +55,19 @@ function copyVendorImages ( callback ) {
         console.log( ('No vendor images to copy, skipping.').grey );
     }
     else {
-        _.keys( settings.base.img.value ).forEach( function ( directory ) {
-            if ( _.has( settings.base.img.value, directory ) ) {
-                mkdirp( buildPath + 'img/' + directory, function ( err ) {
-                    if ( err ) {
-                        console.error( ('ERROR: ' + err).blackBG.red.bold );
-                    }
-                    else {
-                        console.log( 'Copying vendor images from ' + directory );
-                        copyAssets(
-                            vendorPath + settings.base.img.value[ directory ],
-                            buildPath + 'img/' + directory + '/',
-                            directory );
-                    }
-                });
-            }
+        settings.base.img.value.forEach( function ( imgInfo ) {
+            mkdirp( buildPath + 'img/' + imgInfo.target, function ( err ) {
+                if ( err ) {
+                    console.error( ('ERROR: ' + err).blackBG.red.bold );
+                }
+                else {
+                    console.log( 'Copying vendor images from ' + imgInfo.target );
+                    copyAssets(
+                        vendorPath + imgInfo.source,
+                        buildPath + 'img/' + imgInfo.target + '/',
+                        'base' );
+                }
+            });
         });
     }
     callback( null, 'Vendor images copied' );
@@ -92,10 +90,10 @@ function copyVendorFonts ( callback ) {
         console.log( ('No vendor fonts to copy, skipping.').grey );
     }
     else {
-        _.each( settings.base.fonts.value, function ( fontFile ) {
+        console.log( 'Copying vendor fonts for base module' );
+        settings.base.fonts.value.forEach( function ( fontFile ) {
             // fonts all reside at top level of /fonts
             var outFile = fontFile.split( '/' ).pop();
-
             // TODO: Add check to see if file exists first?
             fs.createReadStream( vendorPath + fontFile )
                 .pipe(
@@ -118,7 +116,6 @@ function copyAssets( readDir, writeDir, module ) {
                 if ( err ) {
                     return console.error( ('ERROR: '. err).blackBG.red.bold );
                 }
-                console.log( 'Copied assets for module ' + module );
             });
         }
         else  {

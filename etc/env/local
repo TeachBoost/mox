@@ -11,6 +11,7 @@ browserifyBase=(
     "-r simpleStorage"
     "-r stapes"
     "-r ractify"
+    "-r ractive"
     "-r icheck"
     "-r mousewheel"
     "-r perfectScrollbar"

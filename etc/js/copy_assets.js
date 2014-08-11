@@ -1,9 +1,9 @@
-/*
- *  copy_assets.js
- *  Copies images and font to build directory
+/**
+ * copy_assets.js
+ * Copies images and fonts to build directory
  *
- *  To run:
- *  $> node etc/js/copy_assets.js
+ * To run:
+ * $> node etc/js/copy_assets.js
  */
 'use strict';
 
@@ -11,42 +11,74 @@ var fs = require( 'fs' )
   , _ = require( 'underscore' )
   , mkdirp = require( 'mkdirp' )
   , ncp = require( 'ncp' ).ncp
-  , async = require( 'async' );
+  , async = require( 'async' )
+  , colors = require( 'colors' );
 
-var scriptPath = __dirname;
-
-var config = JSON.parse(
-        fs.readFileSync( scriptPath + '/../config.json', 'utf8' ) )
+// set up paths and config
+var scriptPath = __dirname
+  , config = JSON.parse(
+        fs.readFileSync(
+            scriptPath + '/../config.json',
+            'utf8'
+        ))
   , defaults = JSON.parse(
-        fs.readFileSync( scriptPath + '/../defaults.json', 'utf8' ) )
-  , settings = _.extend( defaults, config );
-
-var appPath = scriptPath + '/' + settings.devPaths.appPath
+        fs.readFileSync(
+            scriptPath + '/../defaults.json',
+            'utf8'
+        ))
+  , settings = _.extend( defaults, config )
+  , appPath = scriptPath + '/' + settings.devPaths.appPath
   , vendorPath = scriptPath + '/' + settings.devPaths.vendorPath
-  , buildPath = scriptPath + '/' + settings.devPaths.buildPath;
-
-var modules = _.keys( settings.modules );
+  , buildPath = scriptPath + '/' + settings.devPaths.buildPath
+  , modules = _.keys( settings.modules );
 
 // Create buildpath if it doesn't exist
 mkdirp( buildPath + 'img' );
 mkdirp( buildPath + 'fonts' );
 
-modules = modules.map( function ( module ) { return 'modules/' + module; } );
+// Remove base from list
 modules.unshift( 'base' );
 
-async.series( [
-    copyBaseImages,
-    copyVendorImages,
-    copyFonts
-    ],
-    function ( err, results ) {
-        if ( err ) { console.log( err ); }
-        // console.log( results.join( '\n' ) );
-} );
+// Run these sequentially
+async.series([
+    copyVendorImages//,
+    //copyModuleImages,
+    //copyVendorFonts
+],
+function ( err, results ) {
+    if ( err ) {
+        console.log( err );
+    }
+});
 
-//Copy module-specific images into top level build/public/img folder
-function copyBaseImages ( callback ) {
+// Copy images specified in the config settings. These are
+// images pulled into the vendor folder.
+function copyVendorImages ( callback ) {
+    if ( ! settings.base.img.value.length ) {
+        console.log( ('No vendor images to copy, skipping.').grey );
+    }
+    else {
+        _.keys( settings.base.img.value ).forEach( function ( directory ) {
+            if ( _.has( settings.base.img.value, directory ) ) {
+                mkdirp( buildPath + 'img/' + directory, function ( err ) {
+                    if ( err ) {
+                        console.error( ('ERROR: ' + err).blackBG.red.bold );
+                    }
+                    else {
+                        console.log( 'Copying vendor images from ' + directory );
+                        copyAssets(
+                            vendorPath + settings.base.img.value[ directory ],
+                            buildPath + 'img/' + directory + '/',
+                            directory );
+                    }
+                });
+            }
+        });
+    }
+    callback( null, 'Vendor images copied' );
+}
 
+function copyModuleImages ( callback ) {
     _.each( modules, function ( module ) {
 
         copyAssets( appPath + module + '/images/',
@@ -57,7 +89,7 @@ function copyBaseImages ( callback ) {
 }
 
 // Copy vendor-specific  images into build/public/img/[vendor] folders
-function copyVendorImages ( callback ) {
+function copyModuleImages ( callback ) {
 
     _.keys( settings.base.img.value ).forEach( function ( directory ) {
 

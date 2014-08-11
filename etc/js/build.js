@@ -101,7 +101,9 @@ function buildBase () {
     browserifyModules(
         'base',
         null,
-        buildPath + 'js/base.js',
+        ( flags.minify )
+            ? buildPath + 'js/base.min.js'
+            : buildPath + 'js/base.js',
         settings.base.browserify );
     // and copy the assets
     async.series([
@@ -171,14 +173,14 @@ function lessCssFiles ( callback, module ) {
             if ( error !== null ) {
                 console.log( ('ERROR: (exec) ' + error).blackBG.red.bold );
             }
-        });
 
-    if ( module === undefined ) {
-        callback( null, 'LESS CSS compiled into ' + outFile.replace( __dirname, '' ) );
-    }
-    else {
-        console.log( 'LESS CSS compiled into ' + outFile.replace( __dirname, '' ) );
-    }
+            if ( module === undefined ) {
+                callback( null, 'LESS CSS compiled into ' + outFile.replace( __dirname, '' ) );
+            }
+            else {
+                console.log( 'LESS CSS compiled into ' + outFile.replace( __dirname, '' ) );
+            }
+        });
 }
 
 // Build a regular module
@@ -189,7 +191,9 @@ function buildModule ( module ) {
         browserifyModules(
             module,
             [ modulePath + module + '/index.js' ],
-            buildPath + 'js/' + module + '.js',
+            ( flags.minify )
+                ? buildPath + 'js/' + module + '.min.js'
+                : buildPath + 'js/' + module + '.js',
             settings.modules[ module ].browserify );
         // less the CSS
         lessCssFiles( null, module );

@@ -1,20 +1,43 @@
 {
     "base": {
         "js": {
-            "description": "VendorJS assets to copy on build; specify source-file and target build-file name.",
-            "value": []
+            "description": "Source/target map of vendor JS assets to copy on build.",
+            "value": [{
+                "source": "history/history.iegte8.js",
+                "target": "history.js"
+            }]
         },
         "css": {
-            "description": "Vendor CSS files to prepend. All are written to base.css.",
-            "value": []
+            "description": "Array of vendor CSS files to prepend. All are written to base.css.",
+            "value": [
+                "bootstrap/dist/css/bootstrap.css",
+                "fontawesome/css/font-awesome.css",
+                "ui-kit/dist/css/build.css"
+            ]
         },
         "img": {
-            "description": "Vendor image directory or file names to copy over.",
-            "value": []
+            "description": "Source/target map of vendor image directory/file names to copy over.",
+            "value": [{
+                "source": "ui-kit/dist/img/brand",
+                "target": "brand"
+            }, {
+                "source": "ui-kit/dist/img/icheck",
+                "target": "icheck"
+            }]
         },
         "fonts": {
-            "description": "array of fonts to copy when building base, relative to the vendor path",
-            "value": []
+            "description": "Array of fonts to copy when building base, relative to the vendor path",
+            "value": [
+                "bootstrap/dist/fonts/glyphicons-halflings-regular.eot",
+                "bootstrap/dist/fonts/glyphicons-halflings-regular.svg",
+                "bootstrap/dist/fonts/glyphicons-halflings-regular.ttf",
+                "bootstrap/dist/fonts/glyphicons-halflings-regular.woff",
+                "fontawesome/fonts/FontAwesome.otf",
+                "fontawesome/fonts/fontawesome-webfont.eot",
+                "fontawesome/fonts/fontawesome-webfont.svg",
+                "fontawesome/fonts/fontawesome-webfont.ttf",
+                "fontawesome/fonts/fontawesome-webfont.woff"
+            ]
         },
         "browserify": {
             "requires": [
@@ -27,6 +50,7 @@
                 "simpleStorage",
                 "stapes",
                 "ractify",
+                "ractive",
                 "icheck",
                 "mousewheel",
                 "perfectScrollbar",

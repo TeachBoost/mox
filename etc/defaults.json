@@ -24,10 +24,6 @@
             "value": "http://mishra.local/project",
             "description": "path for assets"
         },
-        "historyBasePath": {
-            "value": "/project",
-            "description": "stem used for history polyfill"
-        },
         "useHtaccess": {
             "value": "no",
             "description": "using htaccess?"

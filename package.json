@@ -1,6 +1,6 @@
 {
     "name": "Mox",
-    "version": "0.4.0",
+    "version": "0.4.1",
     "description": "Common libraries for front-end projects",
     "author": "Mike Gioia <mike@teachboost.com>",
     "license": "ISC",
@@ -27,7 +27,7 @@
     "devDependencies": {
         "gulp-browserify": "*",
         "watchify": "*",
-        "browserify": "*",
+        "browserify": "<5.0.0",
         "less": "*",
         "browserify-shim": "*",
         "qunit": "*",
@@ -36,6 +36,7 @@
         "ncp": "*",
         "mkdirp": "*",
         "async": "*",
+        "commander": "*",
         "mustache": "*",
         "gulp": "*",
         "path": "*",

@@ -36,14 +36,11 @@ var scriptPath = __dirname
 mkdirp( buildPath + 'img' );
 mkdirp( buildPath + 'fonts' );
 
-// Remove base from list
-modules.unshift( 'base' );
-
 // Run these sequentially
 async.series([
-    copyVendorImages//,
-    //copyModuleImages,
-    //copyVendorFonts
+    copyVendorImages,
+    copyModuleImages,
+    copyVendorFonts
 ],
 function ( err, results ) {
     if ( err ) {
@@ -78,68 +75,54 @@ function copyVendorImages ( callback ) {
     callback( null, 'Vendor images copied' );
 }
 
+// Copy images from the module config.
 function copyModuleImages ( callback ) {
     _.each( modules, function ( module ) {
-
-        copyAssets( appPath + module + '/images/',
-                    buildPath + 'img/',
-                    module );
-    } );
+        copyAssets(
+            appPath + 'modules/' + module + '/images/',
+            buildPath + 'img/',
+            module );
+    });
     callback( null, 'Base images copied' );
 }
 
-// Copy vendor-specific  images into build/public/img/[vendor] folders
-function copyModuleImages ( callback ) {
-
-    _.keys( settings.base.img.value ).forEach( function ( directory ) {
-
-        if ( settings.base.img.value.hasOwnProperty( directory ) ) {
-            mkdirp( buildPath + 'img/' + directory, function ( err ) {
-                if ( err ) { console.error( err ); }
-                else {
-                    console.log( 'Copying ' + directory + ' assets' );
-                    copyAssets( vendorPath + settings.base.img.value[directory],
-                        buildPath + 'img/' + directory + '/',
-                        directory
-                    );
-                }
-            } );
-        }
-    } );
-    callback( null, 'Vendor images copied' );
-}
-
 // Copy vendor fonts into build/public/fonts
-function copyFonts ( callback ) {
+function copyVendorFonts ( callback ) {
+    if ( ! settings.base.fonts.value.length ) {
+        console.log( ('No vendor fonts to copy, skipping.').grey );
+    }
+    else {
+        _.each( settings.base.fonts.value, function ( fontFile ) {
+            // fonts all reside at top level of /fonts
+            var outFile = fontFile.split( '/' ).pop();
 
-    _.each( settings.base.fonts.value, function ( fontFile ) {
-        // fonts all reside at top level of /fonts
-        var outFile = fontFile.split( '/' ).pop( );
-
-        // TODO: Add check to see if file exists first?
-        fs.createReadStream( vendorPath + fontFile )
-            .pipe( fs.createWriteStream( buildPath + 'fonts/' + outFile ) );
-    } );
+            // TODO: Add check to see if file exists first?
+            fs.createReadStream( vendorPath + fontFile )
+                .pipe(
+                    fs.createWriteStream(
+                        buildPath + 'fonts/' + outFile
+                    ));
+        });
+    }
     callback( null, 'Fonts copied' );
 }
 
-
 // Copy directories, checking if files exist first
 function copyAssets( readDir, writeDir, module ) {
-
     fs.readdir( readDir, function ( err, assets ) {
-            if ( err ) {
-                console.log( module + ' asset directory not found' );
-            }
-            else if ( assets.length > 0 ) {
-                ncp( readDir, writeDir, function ( err ) {
-                    if ( err ) { return console.error( err ); }
-                         console.log( 'Copied ' + module + ' assets' );
-                        } );
-            }
-            else  {
-                console.log( 'no image files found in ' +
-                    module + ', skipping' );
-            }
-    } );
+        if ( err ) {
+            console.log( ('ERROR: '. module + ' asset directory not found').blackBG.red.bold );
+        }
+        else if ( assets.length > 0 ) {
+            ncp( readDir, writeDir, function ( err ) {
+                if ( err ) {
+                    return console.error( ('ERROR: '. err).blackBG.red.bold );
+                }
+                console.log( 'Copied assets for module ' + module );
+            });
+        }
+        else  {
+            console.log( ('No image files found in module ' + module + ', skipping.').grey );
+        }
+    });
 }

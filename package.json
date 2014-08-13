@@ -1,101 +1,101 @@
 {
-    "name": "Mox",
-    "version": "0.4.2",
-    "description": "Common libraries for front-end projects",
-    "author": "Mike Gioia <mike@teachboost.com>",
-    "license": "ISC",
-    "main": "./dist/mox.js",
-    "dependencies": {
-        "jquery-browserify": "*",
-        "bootstrap-browserify": "*",
-        "underscore": "*",
-        "superagent": "*",
-        "pouchdb": "*",
-        "page": "*",
-        "stapes": "*",
-        "ractify": "*",
-        "ractive": "*",
-        "interact": "*",
-        "uglifyify": "*",
-        "mox-interface": "*",
-        "mox-router": "*",
-        "mox-request": "*",
-        "mox-notify": "*",
-        "mox-lockscreen": "*",
-        "mox-toolbelt": "*"
+  "name": "Mox",
+  "version": "0.4.3",
+  "description": "Common libraries for front-end projects",
+  "author": "Mike Gioia <mike@teachboost.com>",
+  "license": "ISC",
+  "main": "./dist/mox.js",
+  "dependencies": {
+    "bootstrap-browserify": "*",
+    "interact": "*",
+    "jquery-browserify": "*",
+    "mox-interface": "*",
+    "mox-lockscreen": "*",
+    "mox-notify": "*",
+    "mox-request": "*",
+    "mox-router": "*",
+    "mox-toolbelt": "*",
+    "page": "git://github.com/TeachBoost/page.js.git",
+    "pouchdb": "*",
+    "ractify": "*",
+    "ractive": "*",
+    "stapes": "*",
+    "superagent": "*",
+    "uglifyify": "*",
+    "underscore": "*"
+  },
+  "devDependencies": {
+    "gulp-browserify": "*",
+    "watchify": "*",
+    "browserify": "<5.0.0",
+    "less": "*",
+    "browserify-shim": "*",
+    "qunit": "*",
+    "prompt": "*",
+    "colors": "*",
+    "ncp": "*",
+    "mkdirp": "*",
+    "async": "*",
+    "commander": "*",
+    "mustache": "*",
+    "gulp": "*",
+    "path": "*",
+    "gulp-less": "*",
+    "gulp-rename": "*",
+    "gulp-exec": "*",
+    "mocha": "*",
+    "chai": "*"
+  },
+  "browser": {
+    "jquery": "jquery-browserify",
+    "bootstrap": "bootstrap-browserify",
+    "ractive": "./node_modules/ractive/ractive-legacy.runtime.js",
+    "simpleStorage": "./vendor/simpleStorage/simpleStorage.js",
+    "notifyjs": "./vendor/ui-kit/dist/js/notify.min.js",
+    "icheck": "./vendor/ui-kit/dist/js/icheck.min.js",
+    "mousewheel": "./vendor/ui-kit/dist/js/mousewheel.min.js",
+    "perfectScrollbar": "./vendor/ui-kit/dist/js/perfectScrollbar.min.js"
+  },
+  "browserify": {
+    "transform": [
+      "browserify-shim"
+    ]
+  },
+  "browserify-shim": {
+    "./vendor/ui-kit/dist/js/icheck.min.js": {
+      "depends": [
+        "./node_modules/jquery-browserify"
+      ]
     },
-    "devDependencies": {
-        "gulp-browserify": "*",
-        "watchify": "*",
-        "browserify": "<5.0.0",
-        "less": "*",
-        "browserify-shim": "*",
-        "qunit": "*",
-        "prompt": "*",
-        "colors": "*",
-        "ncp": "*",
-        "mkdirp": "*",
-        "async": "*",
-        "commander": "*",
-        "mustache": "*",
-        "gulp": "*",
-        "path": "*",
-        "gulp-less": "*",
-        "gulp-rename": "*",
-        "gulp-exec": "*",
-        "mocha": "*",
-        "chai": "*"
+    "./vendor/ui-kit/dist/js/notify.min.js": {
+      "depends": [
+        "./node_modules/jquery-browserify"
+      ]
     },
-    "browser": {
-        "jquery": "jquery-browserify",
-        "bootstrap": "bootstrap-browserify",
-        "ractive": "./node_modules/ractive/ractive-legacy.runtime.js",
-        "simpleStorage": "./vendor/simpleStorage/simpleStorage.js",
-        "notifyjs": "./vendor/ui-kit/dist/js/notify.min.js",
-        "icheck": "./vendor/ui-kit/dist/js/icheck.min.js",
-        "mousewheel": "./vendor/ui-kit/dist/js/mousewheel.min.js",
-        "perfectScrollbar": "./vendor/ui-kit/dist/js/perfectScrollbar.min.js"
+    "./vendor/ui-kit/dist/js/perfectScrollbar.min.js": {
+      "depends": [
+        "./node_modules/jquery-browserify"
+      ]
     },
-    "browserify": {
-        "transform": [
-            "browserify-shim"
-        ]
-    },
-    "browserify-shim": {
-        "./vendor/ui-kit/dist/js/icheck.min.js": {
-            "depends": [
-                "./node_modules/jquery-browserify"
-            ]
-        },
-        "./vendor/ui-kit/dist/js/notify.min.js": {
-            "depends": [
-                "./node_modules/jquery-browserify"
-            ]
-        },
-        "./vendor/ui-kit/dist/js/perfectScrollbar.min.js": {
-            "depends": [
-                "./node_modules/jquery-browserify"
-            ]
-        },
-        "./vendor/ui-kit/dist/js/mousewheel.min.js": {
-            "depends": [
-                "./node_modules/jquery-browserify"
-            ]
-        }
-    },
-    "scripts": {
-        "test": "mocha",
-        "build": "./etc/bin/build.sh all",
-        "build-html": "./etc/bin/compile_html.sh",
-        "build-base": "./etc/bin/build.sh base",
-        "copy-assets": "./etc/bin/copy_assets.sh"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git://github.com/TeachBoost/mox.git"
-    },
-    "bugs": {
-        "url": "https://github.com/TeachBoost/mox/issues"
-    },
-    "homepage": "https://github.com/TeachBoost/mox"
+    "./vendor/ui-kit/dist/js/mousewheel.min.js": {
+      "depends": [
+        "./node_modules/jquery-browserify"
+      ]
+    }
+  },
+  "scripts": {
+    "test": "mocha",
+    "build": "./etc/bin/build.sh all",
+    "build-html": "./etc/bin/compile_html.sh",
+    "build-base": "./etc/bin/build.sh base",
+    "copy-assets": "./etc/bin/copy_assets.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/TeachBoost/mox.git"
+  },
+  "bugs": {
+    "url": "https://github.com/TeachBoost/mox/issues"
+  },
+  "homepage": "https://github.com/TeachBoost/mox"
 }

@@ -12222,589 +12222,586 @@ var Toolbelt = {
 module.exports = Toolbelt;
 },{}],"mox-toolbelt":[function(require,module,exports){
 module.exports=require('9CxDSh');
-},{}],"4zGmvs":[function(require,module,exports){
-
-  /* jshint browser:true */
-
-  /**
-   * Module dependencies.
-   */
-
-  var pathtoRegexp = require('path-to-regexp');
-
-  /**
-   * Module exports.
-   */
-
-  module.exports = page;
-
-  /**
-   * Perform initial dispatch.
-   */
-
-  var dispatch = true;
-
-  /**
-   * Base path.
-   */
-
-  var base = '';
-
-  /**
-   * Running flag.
-   */
-
-  var running;
-
-  /**
-   * Register `path` with callback `fn()`,
-   * or route `path`, or `page.start()`.
-   *
-   *   page(fn);
-   *   page('*', fn);
-   *   page('/user/:id', load, user);
-   *   page('/user/' + user.id, { some: 'thing' });
-   *   page('/user/' + user.id);
-   *   page();
-   *
-   * @param {String|Function} path
-   * @param {Function} fn...
-   * @api public
-   */
-
-  function page(path, fn) {
-    // <callback>
-    if ('function' == typeof path) {
-      return page('*', path);
-    }
-
-    // route <path> to <callback ...>
-    if ('function' == typeof fn) {
-      var route = new Route(path);
-      for (var i = 1; i < arguments.length; ++i) {
-        page.callbacks.push(route.middleware(arguments[i]));
-      }
-    // show <path> with [state]
-    } else if ('string' == typeof path) {
-      page.show(path, fn);
-    // start [options]
-    } else {
-      page.start(path);
-    }
-  }
-
-  /**
-   * Callback functions.
-   */
-
-  page.callbacks = [];
-
-  /**
-   * Get or set basepath to `path`.
-   *
-   * @param {String} path
-   * @api public
-   */
-
-  page.base = function(path){
-    if (0 == arguments.length) return base;
-    base = path;
-  };
-
-  /**
-   * Bind with the given `options`.
-   *
-   * Options:
-   *
-   *    - `click` bind to click events [true]
-   *    - `popstate` bind to popstate [true]
-   *    - `dispatch` perform initial dispatch [true]
-   *
-   * @param {Object} options
-   * @api public
-   */
-
-  page.start = function(options){
-    options = options || {};
-    if (running) return;
-    running = true;
-    if (false === options.dispatch) dispatch = false;
-    if (false !== options.popstate) window.addEventListener('popstate', onpopstate, false);
-    if (false !== options.click) window.addEventListener('click', onclick, false);
-    if (!dispatch) return;
-    var url = location.pathname + location.search + location.hash;
-    page.replace(url, null, true, dispatch);
-  };
-
-  /**
-   * Unbind click and popstate event handlers.
-   *
-   * @api public
-   */
-
-  page.stop = function(){
-    running = false;
-    removeEventListener('click', onclick, false);
-    removeEventListener('popstate', onpopstate, false);
-  };
-
-  /**
-   * Show `path` with optional `state` object.
-   *
-   * @param {String} path
-   * @param {Object} state
-   * @param {Boolean} dispatch
-   * @return {Context}
-   * @api public
-   */
-
-  page.show = function(path, state, dispatch){
-    var ctx = new Context(path, state);
-    if (!ctx.unhandled) ctx.pushState();
-    if (false !== dispatch) page.dispatch(ctx);
-    return ctx;
-  };
-
-  /**
-   * Replace `path` with optional `state` object.
-   *
-   * @param {String} path
-   * @param {Object} state
-   * @return {Context}
-   * @api public
-   */
-
-  page.replace = function(path, state, init, dispatch){
-    var ctx = new Context(path, state);
-    ctx.init = init;
-    if (null == dispatch) dispatch = true;
-    if (dispatch) page.dispatch(ctx);
-    ctx.save();
-    return ctx;
-  };
-
-  /**
-   * Dispatch the given `ctx`.
-   *
-   * @param {Object} ctx
-   * @api private
-   */
-
-  page.dispatch = function(ctx){
-    var i = 0;
-
-    function next() {
-      var fn = page.callbacks[i++];
-      if (!fn) return unhandled(ctx);
-      fn(ctx, next);
-    }
-
-    next();
-  };
-
-  /**
-   * Unhandled `ctx`. When it's not the initial
-   * popstate then redirect. If you wish to handle
-   * 404s on your own use `page('*', callback)`.
-   *
-   * @param {Context} ctx
-   * @api private
-   */
-
-  function unhandled(ctx) {
-    var current = window.location.pathname + window.location.search;
-    if (current == ctx.canonicalPath) return;
-    page.stop();
-    ctx.unhandled = true;
-    window.location = ctx.canonicalPath;
-  }
-
-  /**
-   * Initialize a new "request" `Context`
-   * with the given `path` and optional initial `state`.
-   *
-   * @param {String} path
-   * @param {Object} state
-   * @api public
-   */
-
-  function Context(path, state) {
-    if ('/' == path[0] && 0 != path.indexOf(base)) path = base + path;
-    var i = path.indexOf('?');
-
-    this.canonicalPath = path;
-    this.path = path.replace(base, '') || '/';
-
-    this.title = document.title;
-    this.state = state || {};
-    this.state.path = path;
-    this.querystring = ~i ? path.slice(i + 1) : '';
-    this.pathname = ~i ? path.slice(0, i) : path;
-    this.params = [];
-
-    // fragment
-    this.hash = '';
-    if (!~this.path.indexOf('#')) return;
-    var parts = this.path.split('#');
-    this.path = parts[0];
-    this.hash = parts[1] || '';
-    this.querystring = this.querystring.split('#')[0];
-  }
-
-  /**
-   * Expose `Context`.
-   */
-
-  page.Context = Context;
-
-  /**
-   * Push state.
-   *
-   * @api private
-   */
-
-  Context.prototype.pushState = function(){
-    history.pushState(this.state, this.title, this.canonicalPath);
-  };
-
-  /**
-   * Save the context state.
-   *
-   * @api public
-   */
-
-  Context.prototype.save = function(){
-    history.replaceState(this.state, this.title, this.canonicalPath);
-  };
-
-  /**
-   * Initialize `Route` with the given HTTP `path`,
-   * and an array of `callbacks` and `options`.
-   *
-   * Options:
-   *
-   *   - `sensitive`    enable case-sensitive routes
-   *   - `strict`       enable strict matching for trailing slashes
-   *
-   * @param {String} path
-   * @param {Object} options.
-   * @api private
-   */
-
-  function Route(path, options) {
-    options = options || {};
-    this.path = (path === '*') ? '(.*)' : path;
-    this.method = 'GET';
-    this.regexp = pathtoRegexp(this.path
-      , this.keys = []
-      , options.sensitive
-      , options.strict);
-  }
-
-  /**
-   * Expose `Route`.
-   */
-
-  page.Route = Route;
-
-  /**
-   * Return route middleware with
-   * the given callback `fn()`.
-   *
-   * @param {Function} fn
-   * @return {Function}
-   * @api public
-   */
-
-  Route.prototype.middleware = function(fn){
-    var self = this;
-    return function(ctx, next){
-      if (self.match(ctx.path, ctx.params)) return fn(ctx, next);
-      next();
-    };
-  };
-
-  /**
-   * Check if this route matches `path`, if so
-   * populate `params`.
-   *
-   * @param {String} path
-   * @param {Array} params
-   * @return {Boolean}
-   * @api private
-   */
-
-  Route.prototype.match = function(path, params){
-    var keys = this.keys
-      , qsIndex = path.indexOf('?')
-      , pathname = ~qsIndex ? path.slice(0, qsIndex) : path
-      , m = this.regexp.exec(decodeURIComponent(pathname));
-
-    if (!m) return false;
-
-    for (var i = 1, len = m.length; i < len; ++i) {
-      var key = keys[i - 1];
-
-      var val = 'string' == typeof m[i]
-        ? decodeURIComponent(m[i])
-        : m[i];
-
-      if (key) {
-        params[key.name] = undefined !== params[key.name]
-          ? params[key.name]
-          : val;
-      } else {
-        params.push(val);
-      }
-    }
-
-    return true;
-  };
-
-  /**
-   * Handle "populate" events.
-   */
-
-  function onpopstate(e) {
-    if (e.state) {
-      var path = e.state.path;
-      page.replace(path, e.state);
-    }
-  }
-
-  /**
-   * Handle "click" events.
-   */
-
-  function onclick(e) {
-    if (1 != which(e)) return;
-    if (e.metaKey || e.ctrlKey || e.shiftKey) return;
-    if (e.defaultPrevented) return;
-
-    // ensure link
-    var el = e.target;
-    while (el && 'A' != el.nodeName) el = el.parentNode;
-    if (!el || 'A' != el.nodeName) return;
-
-    // ensure non-hash for the same path
-    var link = el.getAttribute('href');
-    if (el.pathname == location.pathname && (el.hash || '#' == link)) return;
-
-    // Check for mailto: in the href
-    if (link.indexOf("mailto:") > -1) return;
-
-    // check target
-    if (el.target) return;
-
-    // x-origin
-    if (!sameOrigin(el.href)) return;
-
-    // rebuild path
-    var path = el.pathname + el.search + (el.hash || '');
-
-    // same page
-    var orig = path + el.hash;
-
-    path = path.replace(base, '');
-    if (base && orig == path) return;
-
-    e.preventDefault();
-    page.show(orig);
-  }
-
-  /**
-   * Event button.
-   */
-
-  function which(e) {
-    e = e || window.event;
-    return null == e.which
-      ? e.button
-      : e.which;
-  }
-
-  /**
-   * Check if `href` is the same origin.
-   */
-
-  function sameOrigin(href) {
-    var origin = location.protocol + '//' + location.hostname;
-    if (location.port) origin += ':' + location.port;
-    return 0 == href.indexOf(origin);
-  }
-
-},{"path-to-regexp":24}],"page":[function(require,module,exports){
+},{}],"page":[function(require,module,exports){
 module.exports=require('4zGmvs');
-},{}],24:[function(require,module,exports){
-/**
- * Expose `pathtoRegexp`.
- */
-module.exports = pathtoRegexp;
+},{}],"4zGmvs":[function(require,module,exports){
+ /* jshint browser:true */
 
-/**
- * The main path matching regexp utility.
- *
- * @type {RegExp}
- */
-var PATH_REGEXP = new RegExp([
-  // Match already escaped characters that would otherwise incorrectly appear
-  // in future matches. This allows the user to escape special characters that
-  // shouldn't be transformed.
-  '(\\\\.)',
-  // Match Express-style parameters and un-named parameters with a prefix
-  // and optional suffixes. Matches appear as:
-  //
-  // "/:test(\\d+)?" => ["/", "test", "\d+", undefined, "?"]
-  // "/route(\\d+)" => [undefined, undefined, undefined, "\d+", undefined]
-  '([\\/.])?(?:\\:(\\w+)(?:\\(((?:\\\\.|[^)])*)\\))?|\\(((?:\\\\.|[^)])*)\\))([+*?])?',
-  // Match regexp special characters that should always be escaped.
-  '([.+*?=^!:${}()[\\]|\\/])'
-].join('|'), 'g');
+ /**
+  * Module dependencies.
+  */
 
-/**
- * Escape the capturing group by escaping special characters and meaning.
- *
- * @param  {String} group
- * @return {String}
- */
-function escapeGroup (group) {
-  return group.replace(/([=!:$\/()])/g, '\\$1');
+ var pathtoRegexp = _dereq_('path-to-regexp');
+
+ /**
+  * Module exports.
+  */
+
+ module.exports = page;
+
+ /**
+  * Perform initial dispatch.
+  */
+
+ var dispatch = true;
+
+ /**
+  * Base path.
+  */
+
+ var base = '';
+
+ /**
+  * Running flag.
+  */
+
+ var running;
+
+ /**
+  * @Talia added: IE8 fix / History Polyfill
+  * https://github.com/visionmedia/page.js/pull/48/files
+  */
+
+  var location = window.history.location || window.location;
+  // console.log( 'window.history.location: ' + window.history.location );
+  // console.log( 'window.location: ' + window.location );
+  // console.log( 'location: ' + location );
+
+
+ // @Talia added: IE8 fix / Hasbang (NEEDED?)
+ // https://github.com/visionmedia/page.js/pull/86/files
+ /**
+  * HashBang option
+  */
+
+ var hashbang = false;
+
+ /**
+  * @Talia added: IE8 fix / Various Polyfills
+  *
+  */
+
+ // Object.keys support
+ // From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys
+ if (!Object.keys) {
+   // console.log( 'POLYFILL to support Object keys' );
+   Object.keys = (function () {
+     'use strict';
+     var hasOwnProperty = Object.prototype.hasOwnProperty,
+         hasDontEnumBug = !({toString: null}).propertyIsEnumerable('toString'),
+         dontEnums = [
+           'toString',
+           'toLocaleString',
+           'valueOf',
+           'hasOwnProperty',
+           'isPrototypeOf',
+           'propertyIsEnumerable',
+           'constructor'
+         ],
+         dontEnumsLength = dontEnums.length;
+
+     return function (obj) {
+       if (typeof obj !== 'object' && (typeof obj !== 'function' || obj === null)) {
+         throw new TypeError('Object.keys called on non-object');
+       }
+
+       var result = [], prop, i;
+
+       for (prop in obj) {
+         if (hasOwnProperty.call(obj, prop)) {
+           result.push(prop);
+         }
+       }
+
+       if (hasDontEnumBug) {
+         for (i = 0; i < dontEnumsLength; i++) {
+           if (hasOwnProperty.call(obj, dontEnums[i])) {
+             result.push(dontEnums[i]);
+           }
+         }
+       }
+       return result;
+     };
+   }());
+ }
+
+ // @Talia added: IE8 fix / Array.isArray support
+ // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/isArray#Compatibility
+ if(!Array.isArray) {
+   // console.log( 'POLYFILL to support Array.isArray' );
+   Array.isArray = function(arg) {
+     return Object.prototype.toString.call(arg) === '[object Array]';
+   };
+ }
+
+
+
+
+ /** @Talia: END POLYFILL **/
+
+ /**
+  * Register `path` with callback `fn()`,
+  * or route `path`, or `page.start()`.
+  *
+  *   page(fn);
+  *   page('*', fn);
+  *   page('/user/:id', load, user);
+  *   page('/user/' + user.id, { some: 'thing' });
+  *   page('/user/' + user.id);
+  *   page();
+  *
+  * @param {String|Function} path
+  * @param {Function} fn...
+  * @api public
+  */
+
+ function page(path, fn) {
+   // <callback>
+   if ('function' == typeof path) {
+     return page('*', path);
+   }
+
+   // route <path> to <callback ...>
+   if ('function' == typeof fn) {
+     var route = new Route(path);
+     for (var i = 1; i < arguments.length; ++i) {
+       page.callbacks.push(route.middleware(arguments[i]));
+     }
+   // show <path> with [state]
+   } else if ('string' == typeof path) {
+     page.show(path, fn);
+   // start [options]
+   } else {
+     page.start(path);
+   }
+ }
+
+ /**
+  * Callback functions.
+  */
+
+ page.callbacks = [];
+
+ /**
+  * Get or set basepath to `path`.
+  *
+  * @param {String} path
+  * @api public
+  */
+
+ page.base = function(path){
+   if (0 == arguments.length) return base;
+   base = path;
+ };
+
+ /**
+  * Bind with the given `options`.
+  *
+  * Options:
+  *
+  *    - `click` bind to click events [true]
+  *    - `popstate` bind to popstate [true]
+  *    - `dispatch` perform initial dispatch [true]
+  *
+  * @param {Object} options
+  * @api public
+  */
+
+ page.start = function(options){
+   options = options || {};
+   if (running) return;
+   running = true;
+   if (false === options.dispatch) dispatch = false;
+
+   // @Talia added: IE8 fix / IE8 Polyfill
+   // reference https://github.com/visionmedia/page.js/pull/48/files
+   if (false !== options.popstate) addEvent(window, 'popstate', onpopstate);
+   if (false !== options.click) addEvent(document, 'click', onclick);
+   // if (false !== options.popstate) window.addEventListener('popstate', onpopstate, false);
+   // if (false !== options.click) window.addEventListener('click', onclick, false);
+
+
+
+   // @Talia added: IE8 fix / Hasbang (NEEDED?)
+   // https://github.com/visionmedia/page.js/pull/86/files
+   if (true === options.hashbang) hashbang = true;
+
+
+   if (!dispatch) return;
+
+   // @Talia added: IE8 fix / Hasbang (NEEDED?)
+   // https://github.com/visionmedia/page.js/pull/86/files
+   // if (hashbang && location.hash.indexOf('#!') === 0)
+   //   var url = location.hash.substr(2) + location.search;
+   // else
+   //   var url = location.pathname + location.search + location.hash;
+   var url = location.pathname + location.search + location.hash;
+
+
+   page.replace(url, null, true, dispatch);
+ };
+
+ /**
+  * Unbind click and popstate event handlers.
+  *
+  * @api public
+  */
+
+ page.stop = function(){
+   running = false;
+   // @Talia added: IE8 fix / IE8 Polyfill
+   // reference https://github.com/visionmedia/page.js/pull/48/files
+   removeEvent(document, 'click', onclick);
+   removeEvent(window, 'popstate', onpopstate);
+   // removeEventListener('click', onclick, false);
+   // removeEventListener('popstate', onpopstate, false);
+
+ };
+
+ /**
+  * Show `path` with optional `state` object.
+  *
+  * @param {String} path
+  * @param {Object} state
+  * @param {Boolean} dispatch
+  * @return {Context}
+  * @api public
+  */
+
+ page.show = function(path, state, dispatch){
+   var ctx = new Context(path, state);
+   if (false !== dispatch) page.dispatch(ctx);
+   if (!ctx.unhandled) ctx.pushState();
+   return ctx;
+ };
+
+ /**
+  * Replace `path` with optional `state` object.
+  *
+  * @param {String} path
+  * @param {Object} state
+  * @return {Context}
+  * @api public
+  */
+
+ page.replace = function(path, state, init, dispatch){
+   var ctx = new Context(path, state);
+   ctx.init = init;
+   if (null == dispatch) dispatch = true;
+   if (dispatch) page.dispatch(ctx);
+   ctx.save();
+   return ctx;
+ };
+
+ /**
+  * Dispatch the given `ctx`.
+  *
+  * @param {Object} ctx
+  * @api private
+  */
+
+ page.dispatch = function(ctx){
+   var i = 0;
+
+   function next() {
+     var fn = page.callbacks[i++];
+     if (!fn) return unhandled(ctx);
+     fn(ctx, next);
+   }
+
+   next();
+ };
+
+ /**
+  * Unhandled `ctx`. When it's not the initial
+  * popstate then redirect. If you wish to handle
+  * 404s on your own use `page('*', callback)`.
+  *
+  * @param {Context} ctx
+  * @api private
+  */
+
+ function unhandled(ctx) {
+   // @Talia note: this is for undefined routes
+   // @Talia added: IE8 fix / History polyfill
+   // https://github.com/visionmedia/page.js/pull/48/files
+   // var current = window.location.pathname + window.location.search;
+   var current = location.pathname + location.search;
+   if (current == ctx.canonicalPath) return;
+   page.stop();
+   ctx.unhandled = true;
+   // @Talia added: IE8 fix / History polyfill
+   // https://github.com/visionmedia/page.js/pull/48/files
+   // window.location = ctx.canonicalPath;
+   location = ctx.canonicalPath;
+ }
+
+ /**
+  * Initialize a new "request" `Context`
+  * with the given `path` and optional initial `state`.
+  *
+  * @param {String} path
+  * @param {Object} state
+  * @api public
+  */
+
+ function Context(path, state) {
+   if ('/' == path[0] && 0 != path.indexOf(base)) path = base + path;
+   var i = path.indexOf('?');
+
+   this.canonicalPath = path;
+   this.path = path.replace(base, '') || '/';
+
+   this.title = document.title;
+   this.state = state || {};
+   this.state.path = path;
+   this.querystring = ~i ? path.slice(i + 1) : '';
+   this.pathname = ~i ? path.slice(0, i) : path;
+   this.params = [];
+
+   // fragment
+   this.hash = '';
+   if (!~this.path.indexOf('#')) return;
+   var parts = this.path.split('#');
+   this.path = parts[0];
+   this.hash = parts[1] || '';
+   this.querystring = this.querystring.split('#')[0];
+   // console.log( this );
+ }
+
+ /**
+  * Expose `Context`.
+  */
+
+ page.Context = Context;
+
+ /**
+  * Push state.
+  *
+  * @api private
+  */
+
+ Context.prototype.pushState = function(){
+   history.pushState(this.state, this.title, this.canonicalPath);
+   // @Talia added: IE8 fix / Hasbang (NEEDED? COMMENTED OUT BELOW, STILL USING DEFAULT)
+   // https://github.com/visionmedia/page.js/pull/86/files
+   // history.pushState(this.state, this.title, (hashbang ? '#!'+this.canonicalPath : this.canonicalPath));
+ };
+
+ /**
+  * Save the context state.
+  *
+  * @api public
+  */
+
+ Context.prototype.save = function(){
+   history.replaceState(this.state, this.title, this.canonicalPath);
+   // @Talia added: IE8 fix / Hasbang (NEEDED? COMMENTED OUT BELOW, STILL USING DEFAULT)
+   // https://github.com/visionmedia/page.js/pull/86/files
+   // history.replaceState(this.state, this.title, (hashbang ? '#!'+this.canonicalPath : this.canonicalPath));
+ };
+
+ /**
+  * Initialize `Route` with the given HTTP `path`,
+  * and an array of `callbacks` and `options`.
+  *
+  * Options:
+  *
+  *   - `sensitive`    enable case-sensitive routes
+  *   - `strict`       enable strict matching for trailing slashes
+  *
+  * @param {String} path
+  * @param {Object} options.
+  * @api private
+  */
+
+ function Route(path, options) {
+   options = options || {};
+   this.path = (path === '*') ? '(.*)' : path;
+   this.method = 'GET';
+   this.regexp = pathtoRegexp(this.path
+     , this.keys = []
+     , options.sensitive
+     , options.strict);
+ }
+
+ /**
+  * Expose `Route`.
+  */
+
+ page.Route = Route;
+
+ /**
+  * Return route middleware with
+  * the given callback `fn()`.
+  *
+  * @param {Function} fn
+  * @return {Function}
+  * @api public
+  */
+
+ Route.prototype.middleware = function(fn){
+   var self = this;
+   return function(ctx, next){
+     if (self.match(ctx.path, ctx.params)) return fn(ctx, next);
+     next();
+   };
+ };
+
+ /**
+  * Check if this route matches `path`, if so
+  * populate `params`.
+  *
+  * @param {String} path
+  * @param {Array} params
+  * @return {Boolean}
+  * @api private
+  */
+
+ Route.prototype.match = function(path, params){
+   var keys = this.keys
+     , qsIndex = path.indexOf('?')
+     , pathname = ~qsIndex ? path.slice(0, qsIndex) : path
+     , m = this.regexp.exec(decodeURIComponent(pathname));
+
+   if (!m) return false;
+
+   for (var i = 1, len = m.length; i < len; ++i) {
+     var key = keys[i - 1];
+
+     var val = 'string' == typeof m[i]
+       ? decodeURIComponent(m[i])
+       : m[i];
+
+     if (key) {
+       params[key.name] = undefined !== params[key.name]
+         ? params[key.name]
+         : val;
+     } else {
+       params.push(val);
+     }
+   }
+
+   return true;
+ };
+
+ /**
+  * Handle "populate" events.
+  */
+
+ function onpopstate(e) {
+   if (e.state) {
+     var path = e.state.path;
+     page.replace(path, e.state);
+   }
+ }
+
+ /**
+  * Handle "click" events.
+  */
+
+ function onclick(e) {
+
+   // @Talia added: IE8 fix / History Polyfill
+   // https://github.com/visionmedia/page.js/pull/48/files
+   if (!which(e)) return;
+   // if (1 != which(e)) return;
+
+   if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+   if (e.defaultPrevented) return;
+
+   // ensure link
+   // @Talia added: IE8 fix / History Polyfill
+   // https://github.com/visionmedia/page.js/pull/48/files
+   var el = e.target || e.srcElement;
+   // var el = e.target;
+
+   while (el && 'A' != el.nodeName) el = el.parentNode;
+   if (!el || 'A' != el.nodeName) return;
+
+   // ensure non-hash for the same path
+   var link = el.getAttribute('href');
+
+   if (el.pathname == location.pathname && (el.hash || '#' == link)) return;
+
+   // Check for mailto: in the href
+   if (link.indexOf("mailto:") > -1) return;
+
+   // check target
+   if (el.target) return;
+
+   // x-origin
+   if (!sameOrigin(el.href)) return;
+
+   // rebuild path
+   var path = el.pathname + el.search + (el.hash || '');
+   // @Talia added: IE8 fix / History Polyfill
+   // https://github.com/visionmedia/page.js/pull/48/files
+   // on non-html5 browsers (IE9-), `el.pathname` doesn't include leading '/'
+   if (path[0] !== '/') path = '/' + path;
+
+
+   // same page
+   var orig = path + el.hash;
+
+   path = path.replace(base, '');
+   if (base && orig == path) return;
+
+   // @Talia added: IE8 fix / History Polyfill
+   e.preventDefault ? e.preventDefault() : e.returnValue = false;
+   // e.preventDefault();
+
+   page.show(orig);
+ }
+
+ /**
+  * Event button.
+  */
+
+ function which(e) {
+   e = e || window.event;
+   return null == e.which
+   // @Talia added: IE8 fix / History Polyfill
+   // https://github.com/visionmedia/page.js/pull/48/files
+   // Check on the comparison operators
+     ? e.button == 0
+     : e.which == 1;
+     // ? e.button
+     // : e.which;
+ }
+
+ /**
+  * Check if `href` is the same origin.
+  */
+
+ function sameOrigin(href) {
+   var origin = location.protocol + '//' + location.hostname;
+   if (location.port) origin += ':' + location.port;
+   return 0 == href.indexOf(origin);
+ }
+
+ // @Talia added: IE8 fix / History Polyfill
+ // https://github.com/visionmedia/page.js/pull/48/files
+ /**
+  * Basic cross browser event code
+  */
+
+function addEvent(obj, type, fn) {
+  if (obj.addEventListener) {
+    obj.addEventListener(type, fn, false);
+  } else {
+    obj.attachEvent('on' + type, fn);
+  }
 }
 
-/**
- * Attach the keys as a property of the regexp.
- *
- * @param  {RegExp} re
- * @param  {Array}  keys
- * @return {RegExp}
- */
-var attachKeys = function (re, keys) {
-  re.keys = keys;
-
-  return re;
-};
-
-/**
- * Normalize the given path string, returning a regular expression.
- *
- * An empty array should be passed in, which will contain the placeholder key
- * names. For example `/user/:id` will then contain `["id"]`.
- *
- * @param  {(String|RegExp|Array)} path
- * @param  {Array}                 keys
- * @param  {Object}                options
- * @return {RegExp}
- */
-function pathtoRegexp (path, keys, options) {
-  if (keys && !Array.isArray(keys)) {
-    options = keys;
-    keys = null;
+function removeEvent(obj, type, fn) {
+  if (obj.removeEventListener) {
+    obj.removeEventListener(type, fn, false);
+  } else {
+    obj.detachEvent('on' + type, fn);
   }
-
-  keys = keys || [];
-  options = options || {};
-
-  var strict = options.strict;
-  var end = options.end !== false;
-  var flags = options.sensitive ? '' : 'i';
-  var index = 0;
-
-  if (path instanceof RegExp) {
-    // Match all capturing groups of a regexp.
-    var groups = path.source.match(/\((?!\?)/g) || [];
-
-    // Map all the matches to their numeric keys and push into the keys.
-    keys.push.apply(keys, groups.map(function (match, index) {
-      return {
-        name:      index,
-        delimiter: null,
-        optional:  false,
-        repeat:    false
-      };
-    }));
-
-    // Return the source back to the user.
-    return attachKeys(path, keys);
-  }
-
-  if (Array.isArray(path)) {
-    // Map array parts into regexps and return their source. We also pass
-    // the same keys and options instance into every generation to get
-    // consistent matching groups before we join the sources together.
-    path = path.map(function (value) {
-      return pathtoRegexp(value, keys, options).source;
-    });
-
-    // Generate a new regexp instance by joining all the parts together.
-    return attachKeys(new RegExp('(?:' + path.join('|') + ')', flags), keys);
-  }
-
-  // Alter the path string into a usable regexp.
-  path = path.replace(PATH_REGEXP, function (match, escaped, prefix, key, capture, group, suffix, escape) {
-    // Avoiding re-escaping escaped characters.
-    if (escaped) {
-      return escaped;
-    }
-
-    // Escape regexp special characters.
-    if (escape) {
-      return '\\' + escape;
-    }
-
-    var repeat   = suffix === '+' || suffix === '*';
-    var optional = suffix === '?' || suffix === '*';
-
-    keys.push({
-      name:      key || index++,
-      delimiter: prefix || '/',
-      optional:  optional,
-      repeat:    repeat
-    });
-
-    // Escape the prefix character.
-    prefix = prefix ? '\\' + prefix : '';
-
-    // Match using the custom capturing group, or fallback to capturing
-    // everything up to the next slash (or next period if the param was
-    // prefixed with a period).
-    capture = escapeGroup(capture || group || '[^' + (prefix || '\\/') + ']+?');
-
-    // Allow parameters to be repeated more than once.
-    if (repeat) {
-      capture = capture + '(?:' + prefix + capture + ')*';
-    }
-
-    // Allow a parameter to be optional.
-    if (optional) {
-      return '(?:' + prefix + '(' + capture + '))?';
-    }
-
-    // Basic parameter support.
-    return prefix + '(' + capture + ')';
-  });
-
-  // Check whether the path ends in a slash as it alters some match behaviour.
-  var endsWithSlash = path[path.length - 1] === '/';
-
-  // In non-strict mode we allow an optional trailing slash in the match. If
-  // the path to match already ended with a slash, we need to remove it for
-  // consistency. The slash is only valid at the very end of a path match, not
-  // anywhere in the middle. This is important for non-ending mode, otherwise
-  // "/test/" will match "/test//route".
-  if (!strict) {
-    path = (endsWithSlash ? path.slice(0, -2) : path) + '(?:\\/(?=$))?';
-  }
-
-  // In non-ending mode, we need prompt the capturing groups to match as much
-  // as possible by using a positive lookahead for the end or next path segment.
-  if (!end) {
-    path += strict && endsWithSlash ? '' : '(?=\\/|$)';
-  }
-
-  return attachKeys(new RegExp('^' + path + (end ? '$' : ''), flags), keys);
-};
-
-},{}],25:[function(require,module,exports){
+}
+},{}],24:[function(require,module,exports){
 "use strict";
 
 var utils = require('./utils');
@@ -13570,7 +13567,7 @@ AbstractPouchDB.prototype.registerDependentDatabase =
   });
 });
 
-},{"./changes":30,"./deps/errors":35,"./deps/upsert":37,"./merge":43,"./utils":48,"events":4}],26:[function(require,module,exports){
+},{"./changes":29,"./deps/errors":34,"./deps/upsert":36,"./merge":42,"./utils":47,"events":4}],25:[function(require,module,exports){
 "use strict";
 
 var CHANGES_BATCH_SIZE = 25;
@@ -14518,7 +14515,7 @@ HttpPouch.valid = function () {
 
 module.exports = HttpPouch;
 
-},{"../deps/errors":35,"../utils":48}],27:[function(require,module,exports){
+},{"../deps/errors":34,"../utils":47}],26:[function(require,module,exports){
 (function (process,global){
 'use strict';
 
@@ -15756,9 +15753,9 @@ IdbPouch.Changes = new utils.Changes();
 module.exports = IdbPouch;
 
 }).call(this,require("FWaASH"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../deps/errors":35,"../merge":43,"../utils":48,"FWaASH":5}],28:[function(require,module,exports){
+},{"../deps/errors":34,"../merge":42,"../utils":47,"FWaASH":5}],27:[function(require,module,exports){
 module.exports = ['idb', 'websql'];
-},{}],29:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -17019,7 +17016,7 @@ WebSqlPouch.Changes = new utils.Changes();
 module.exports = WebSqlPouch;
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../deps/errors":35,"../merge":43,"../utils":48}],30:[function(require,module,exports){
+},{"../deps/errors":34,"../merge":42,"../utils":47}],29:[function(require,module,exports){
 'use strict';
 var utils = require('./utils');
 var merge = require('./merge');
@@ -17282,7 +17279,7 @@ Changes.prototype.filterChanges = function (opts) {
     });
   }
 };
-},{"./deps/errors":35,"./evalFilter":39,"./evalView":40,"./merge":43,"./utils":48,"events":4}],31:[function(require,module,exports){
+},{"./deps/errors":34,"./evalFilter":38,"./evalView":39,"./merge":42,"./utils":47,"events":4}],30:[function(require,module,exports){
 (function (global){
 /*globals cordova */
 "use strict";
@@ -17448,7 +17445,7 @@ function PouchDB(name, opts, callback) {
 module.exports = PouchDB;
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./adapter":25,"./taskqueue":47,"./utils":48}],32:[function(require,module,exports){
+},{"./adapter":24,"./taskqueue":46,"./utils":47}],31:[function(require,module,exports){
 "use strict";
 
 var createBlob = require('./blob.js');
@@ -17693,7 +17690,7 @@ function ajax(options, adapterCallback) {
 
 module.exports = ajax;
 
-},{"../utils":48,"./blob.js":33,"./errors":35}],33:[function(require,module,exports){
+},{"../utils":47,"./blob.js":32,"./errors":34}],32:[function(require,module,exports){
 (function (global){
 "use strict";
 
@@ -17725,7 +17722,7 @@ module.exports = createBlob;
 
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],34:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 'use strict';
 exports.Map = LazyMap; // TODO: use ES6 map
 exports.Set = LazySet; // TODO: use ES6 set
@@ -17789,7 +17786,7 @@ LazySet.prototype.has = function (key) {
 LazySet.prototype["delete"] = function (key) {
   return this.store["delete"](key);
 };
-},{}],35:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 "use strict";
 
 function PouchError(opts) {
@@ -17920,7 +17917,7 @@ exports.error = function (error, reason, name) {
   return new CustomPouchError(reason);
 };
 
-},{}],36:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 (function (process,global){
 'use strict';
 
@@ -17994,7 +17991,7 @@ module.exports = function (data, callback) {
 };
 
 }).call(this,require("FWaASH"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"FWaASH":5,"crypto":3,"spark-md5":78}],37:[function(require,module,exports){
+},{"FWaASH":5,"crypto":3,"spark-md5":77}],36:[function(require,module,exports){
 'use strict';
 var Promise = require('../utils').Promise;
 
@@ -18045,7 +18042,7 @@ module.exports = function (db, docId, diffFun, cb) {
   }
 };
 
-},{"../utils":48}],38:[function(require,module,exports){
+},{"../utils":47}],37:[function(require,module,exports){
 "use strict";
 
 // BEGIN Math.uuid.js
@@ -18130,7 +18127,7 @@ function uuid(len, radix) {
 module.exports = uuid;
 
 
-},{}],39:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 'use strict';
 
 module.exports = evalFilter;
@@ -18142,7 +18139,7 @@ function evalFilter(input) {
     ' })()'
   ].join(''));
 }
-},{}],40:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 'use strict';
 
 module.exports = evalView;
@@ -18196,7 +18193,7 @@ if (!process.browser) {
 }
 
 }).call(this,require("FWaASH"))
-},{"./adapters/http":26,"./adapters/idb":27,"./adapters/leveldb":3,"./adapters/websql":29,"./deps/ajax":32,"./deps/errors":35,"./replicate":44,"./setup":45,"./sync":46,"./utils":48,"./version":49,"FWaASH":5,"pouchdb-extend":69,"pouchdb-mapreduce":72}],43:[function(require,module,exports){
+},{"./adapters/http":25,"./adapters/idb":26,"./adapters/leveldb":3,"./adapters/websql":28,"./deps/ajax":31,"./deps/errors":34,"./replicate":43,"./setup":44,"./sync":45,"./utils":47,"./version":48,"FWaASH":5,"pouchdb-extend":68,"pouchdb-mapreduce":71}],42:[function(require,module,exports){
 'use strict';
 var extend = require('pouchdb-extend');
 
@@ -18472,7 +18469,7 @@ PouchMerge.rootToLeaf = function (tree) {
 
 module.exports = PouchMerge;
 
-},{"pouchdb-extend":69}],44:[function(require,module,exports){
+},{"pouchdb-extend":68}],43:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -19036,7 +19033,7 @@ function replicateWrapper(src, target, opts, callback) {
 
 exports.replicate = replicateWrapper;
 
-},{"./index":"S6KqvD","./utils":48,"events":4}],45:[function(require,module,exports){
+},{"./index":"S6KqvD","./utils":47,"events":4}],44:[function(require,module,exports){
 (function (global){
 "use strict";
 
@@ -19250,7 +19247,7 @@ PouchDB.defaults = function (defaultOpts) {
 module.exports = PouchDB;
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./adapters/preferredAdapters.js":28,"./constructor":31,"./utils":48,"events":4}],46:[function(require,module,exports){
+},{"./adapters/preferredAdapters.js":27,"./constructor":30,"./utils":47,"events":4}],45:[function(require,module,exports){
 'use strict';
 var utils = require('./utils');
 var replicate = require('./replicate').replicate;
@@ -19406,7 +19403,7 @@ Sync.prototype.cancel = function () {
     this.pull.cancel();
   }
 };
-},{"./replicate":44,"./utils":48,"events":4}],47:[function(require,module,exports){
+},{"./replicate":43,"./utils":47,"events":4}],46:[function(require,module,exports){
 'use strict';
 
 module.exports = TaskQueue;
@@ -19476,7 +19473,7 @@ TaskQueue.prototype.addTask = function (name, parameters) {
   }
 };
 
-},{}],48:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 (function (process,global){
 /*jshint strict: false */
 /*global chrome */
@@ -20034,10 +20031,10 @@ exports.cancellableFun = function (fun, self, opts) {
 
 exports.MD5 = exports.toPromise(require('./deps/md5'));
 }).call(this,require("FWaASH"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./deps/ajax":32,"./deps/blob":33,"./deps/buffer":3,"./deps/collections":34,"./deps/errors":35,"./deps/md5":36,"./deps/uuid":38,"./merge":43,"FWaASH":5,"argsarray":50,"bluebird":55,"events":4,"inherits":51,"pouchdb-extend":69}],49:[function(require,module,exports){
+},{"./deps/ajax":31,"./deps/blob":32,"./deps/buffer":3,"./deps/collections":33,"./deps/errors":34,"./deps/md5":35,"./deps/uuid":37,"./merge":42,"FWaASH":5,"argsarray":49,"bluebird":54,"events":4,"inherits":50,"pouchdb-extend":68}],48:[function(require,module,exports){
 module.exports = "3.0.0";
 
-},{}],50:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 'use strict';
 
 module.exports = argsArray;
@@ -20057,7 +20054,7 @@ function argsArray(fun) {
     }
   };
 }
-},{}],51:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -20082,13 +20079,13 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],52:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 'use strict';
 
 module.exports = INTERNAL;
 
 function INTERNAL() {}
-},{}],53:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 'use strict';
 var Promise = require('./promise');
 var reject = require('./reject');
@@ -20132,7 +20129,7 @@ module.exports = function all(iterable) {
     }
   }
 };
-},{"./INTERNAL":52,"./handlers":54,"./promise":56,"./reject":58,"./resolve":59}],54:[function(require,module,exports){
+},{"./INTERNAL":51,"./handlers":53,"./promise":55,"./reject":57,"./resolve":58}],53:[function(require,module,exports){
 'use strict';
 var tryCatch = require('./tryCatch');
 var resolveThenable = require('./resolveThenable');
@@ -20178,13 +20175,13 @@ function getThen(obj) {
     };
   }
 }
-},{"./resolveThenable":60,"./states":61,"./tryCatch":62}],55:[function(require,module,exports){
+},{"./resolveThenable":59,"./states":60,"./tryCatch":61}],54:[function(require,module,exports){
 module.exports = exports = require('./promise');
 
 exports.resolve = require('./resolve');
 exports.reject = require('./reject');
 exports.all = require('./all');
-},{"./all":53,"./promise":56,"./reject":58,"./resolve":59}],56:[function(require,module,exports){
+},{"./all":52,"./promise":55,"./reject":57,"./resolve":58}],55:[function(require,module,exports){
 'use strict';
 
 var unwrap = require('./unwrap');
@@ -20230,7 +20227,7 @@ Promise.prototype.then = function (onFulfilled, onRejected) {
   return promise;
 };
 
-},{"./INTERNAL":52,"./queueItem":57,"./resolveThenable":60,"./states":61,"./unwrap":63}],57:[function(require,module,exports){
+},{"./INTERNAL":51,"./queueItem":56,"./resolveThenable":59,"./states":60,"./unwrap":62}],56:[function(require,module,exports){
 'use strict';
 var handlers = require('./handlers');
 var unwrap = require('./unwrap');
@@ -20259,7 +20256,7 @@ QueueItem.prototype.callRejected = function (value) {
 QueueItem.prototype.otherCallRejected = function (value) {
   unwrap(this.promise, this.onRejected, value);
 };
-},{"./handlers":54,"./unwrap":63}],58:[function(require,module,exports){
+},{"./handlers":53,"./unwrap":62}],57:[function(require,module,exports){
 'use strict';
 
 var Promise = require('./promise');
@@ -20271,7 +20268,7 @@ function reject(reason) {
 	var promise = new Promise(INTERNAL);
 	return handlers.reject(promise, reason);
 }
-},{"./INTERNAL":52,"./handlers":54,"./promise":56}],59:[function(require,module,exports){
+},{"./INTERNAL":51,"./handlers":53,"./promise":55}],58:[function(require,module,exports){
 'use strict';
 
 var Promise = require('./promise');
@@ -20306,7 +20303,7 @@ function resolve(value) {
       return EMPTYSTRING;
   }
 }
-},{"./INTERNAL":52,"./handlers":54,"./promise":56}],60:[function(require,module,exports){
+},{"./INTERNAL":51,"./handlers":53,"./promise":55}],59:[function(require,module,exports){
 'use strict';
 var handlers = require('./handlers');
 var tryCatch = require('./tryCatch');
@@ -20339,13 +20336,13 @@ function safelyResolveThenable(self, thenable) {
   }
 }
 exports.safely = safelyResolveThenable;
-},{"./handlers":54,"./tryCatch":62}],61:[function(require,module,exports){
+},{"./handlers":53,"./tryCatch":61}],60:[function(require,module,exports){
 // Lazy man's symbols for states
 
 exports.REJECTED = ['REJECTED'];
 exports.FULFILLED = ['FULFILLED'];
 exports.PENDING = ['PENDING'];
-},{}],62:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 'use strict';
 
 module.exports = tryCatch;
@@ -20361,7 +20358,7 @@ function tryCatch(func, value) {
   }
   return out;
 }
-},{}],63:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 'use strict';
 
 var immediate = require('immediate');
@@ -20383,7 +20380,7 @@ function unwrap(promise, func, value) {
     }
   });
 }
-},{"./handlers":54,"immediate":64}],64:[function(require,module,exports){
+},{"./handlers":53,"immediate":63}],63:[function(require,module,exports){
 'use strict';
 var types = [
   require('./nextTick'),
@@ -20424,7 +20421,7 @@ function immediate(task) {
     scheduleDrain();
   }
 }
-},{"./messageChannel":65,"./mutation.js":66,"./nextTick":3,"./stateChange":67,"./timeout":68}],65:[function(require,module,exports){
+},{"./messageChannel":64,"./mutation.js":65,"./nextTick":3,"./stateChange":66,"./timeout":67}],64:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -20445,7 +20442,7 @@ exports.install = function (func) {
   };
 };
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],66:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 (function (global){
 'use strict';
 //based off rsvp https://github.com/tildeio/rsvp.js
@@ -20470,7 +20467,7 @@ exports.install = function (handle) {
   };
 };
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],67:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -20497,7 +20494,7 @@ exports.install = function (handle) {
   };
 };
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],68:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 'use strict';
 exports.test = function () {
   return true;
@@ -20508,7 +20505,7 @@ exports.install = function (t) {
     setTimeout(t, 0);
   };
 };
-},{}],69:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 "use strict";
 
 // Extends method
@@ -20656,7 +20653,7 @@ module.exports = extend;
 
 
 
-},{}],70:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 'use strict';
 
 var upsert = require('./upsert');
@@ -20735,7 +20732,7 @@ module.exports = function (opts) {
   });
 };
 
-},{"./upsert":76,"./utils":77}],71:[function(require,module,exports){
+},{"./upsert":75,"./utils":76}],70:[function(require,module,exports){
 'use strict';
 
 module.exports = function (func, emit, sum, log, isArray, toJSON) {
@@ -20743,7 +20740,7 @@ module.exports = function (func, emit, sum, log, isArray, toJSON) {
   return eval("'use strict'; (" + func.replace(/;\s*$/, "") + ");");
 };
 
-},{}],72:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -21489,7 +21486,7 @@ function NotFoundError(message) {
 utils.inherits(NotFoundError, Error);
 
 }).call(this,require("FWaASH"))
-},{"./create-view":70,"./evalfunc":71,"./taskqueue":75,"./utils":77,"FWaASH":5,"pouchdb-collate":73}],73:[function(require,module,exports){
+},{"./create-view":69,"./evalfunc":70,"./taskqueue":74,"./utils":76,"FWaASH":5,"pouchdb-collate":72}],72:[function(require,module,exports){
 'use strict';
 
 var MIN_MAGNITUDE = -324; // verified by -Number.MIN_VALUE
@@ -21712,7 +21709,7 @@ function numToIndexableString(num) {
   return result;
 }
 
-},{"./utils":74}],74:[function(require,module,exports){
+},{"./utils":73}],73:[function(require,module,exports){
 'use strict';
 
 function pad(str, padWith, upToLength) {
@@ -21783,7 +21780,7 @@ exports.intToDecimalForm = function (int) {
 
   return result;
 };
-},{}],75:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 'use strict';
 /*
  * Simple task queue to sequentialize actions. Assumes callbacks will eventually fire (once).
@@ -21808,7 +21805,7 @@ TaskQueue.prototype.finish = function () {
 
 module.exports = TaskQueue;
 
-},{"./utils":77}],76:[function(require,module,exports){
+},{"./utils":76}],75:[function(require,module,exports){
 'use strict';
 var Promise = require('./utils').Promise;
 
@@ -21851,7 +21848,7 @@ function tryAndPut(db, doc, diffFun) {
 
 module.exports = upsert;
 
-},{"./utils":77}],77:[function(require,module,exports){
+},{"./utils":76}],76:[function(require,module,exports){
 (function (process,global){
 'use strict';
 /* istanbul ignore if */
@@ -21942,7 +21939,7 @@ exports.MD5 = function (string) {
   }
 };
 }).call(this,require("FWaASH"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"FWaASH":5,"argsarray":50,"crypto":3,"inherits":51,"lie":55,"pouchdb-extend":69,"spark-md5":78}],78:[function(require,module,exports){
+},{"FWaASH":5,"argsarray":49,"crypto":3,"inherits":50,"lie":54,"pouchdb-extend":68,"spark-md5":77}],77:[function(require,module,exports){
 /*jshint bitwise:false*/
 /*global unescape*/
 
@@ -36329,7 +36326,7 @@ request.put = function(url, data, fn){
 
 module.exports = request;
 
-},{"emitter":87,"reduce":88}],87:[function(require,module,exports){
+},{"emitter":86,"reduce":87}],86:[function(require,module,exports){
 
 /**
  * Expose `Emitter`.
@@ -36495,7 +36492,7 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-},{}],88:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 
 /**
  * Reduce `arr` with `fn`.

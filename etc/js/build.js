@@ -124,8 +124,8 @@ function buildBase () {
 function copyBaseJsFiles ( callback ) {
     var jsPath = buildPath + 'js/';
 
-    if ( config.base.js.value.length > 0 ) {
-        config.base.js.value.forEach(
+    if ( settings.base.js.value.length > 0 ) {
+        settings.base.js.value.forEach(
             function ( jsFile ) {
                 fs.createReadStream( vendorPath + jsFile.source )
                     .pipe( fs.createWriteStream( jsPath + jsFile.target ) );
@@ -139,10 +139,10 @@ function copyBaseJsFiles ( callback ) {
 
 // Copy and concatenate any CSS files into base.css
 function copyBaseCssFiles ( callback ) {
-    if ( config.base.css.value.length > 0 ) {
+    if ( settings.base.css.value.length > 0 ) {
         var cssPath = buildPath + 'css/base.css';
         concat({
-            src: config.base.css.value,
+            src: settings.base.css.value,
             dest: cssPath
         });
     }
@@ -254,10 +254,12 @@ function concat ( options ) {
     var fileList = options.src
       , outPath = options.dest
       , fileEncoding = 'utf-8'
+      , existingBase = fs.readFileSync( outPath , fileEncoding )
       , out = fileList.map( function ( filePath ) {
             return fs.readFileSync( vendorPath + filePath, fileEncoding );
         });
-    fs.writeFileSync( outPath, out.join( '\n' ), fileEncoding );
+    fs.writeFileSync( outPath, out.join( '\n' ) + existingBase , fileEncoding );
+
 }
 
 // Run the program

@@ -12186,7 +12186,7 @@ var Router = Stapes.subclass({
 module.exports = Router;
 },{"page":"4zGmvs","stapes":"9b+syo"}],"9CxDSh":[function(require,module,exports){
 /**
- * Utility functions
+ * MOX Utility functions
  */
 
 var Toolbelt = {
@@ -12194,11 +12194,15 @@ var Toolbelt = {
     // returns a segment from the URL. n starts at 1.
     getUrlSegment: function ( n ) {
         var pathname = window.location.pathname;
-        
+
         // remove leading slash
-        if ( pathname.charAt( 0 ) == '/' ) {
+        if ( pathname.charAt( 0 ) === '/' ) {
             pathname = pathname.substr( 1 );
         }
+
+        // remove hash or hashbang (only if inside //)
+        pathname = pathname.replace( /\/\#!?\//, '/' );
+
 
         var segments = pathname.split( '/' );
 

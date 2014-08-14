@@ -12184,7 +12184,9 @@ var Router = Stapes.subclass({
 
 // return
 module.exports = Router;
-},{"page":"4zGmvs","stapes":"9b+syo"}],"9CxDSh":[function(require,module,exports){
+},{"page":"c8LduW","stapes":"9b+syo"}],"mox-toolbelt":[function(require,module,exports){
+module.exports=require('9CxDSh');
+},{}],"9CxDSh":[function(require,module,exports){
 /**
  * MOX Utility functions
  */
@@ -12193,7 +12195,10 @@ var Toolbelt = {
 
     // returns a segment from the URL. n starts at 1.
     getUrlSegment: function ( n ) {
-        var pathname = window.location.pathname;
+        // for IE8, window.location will be wrong
+        var location = window.history.location || window.location;
+        var pathname = location.pathname;
+
 
         // remove leading slash
         if ( pathname.charAt( 0 ) === '/' ) {
@@ -12201,6 +12206,8 @@ var Toolbelt = {
         }
 
         // remove hash or hashbang (only if inside //)
+        // likely shouldn't need , location will
+        // not contain a hash.
         pathname = pathname.replace( /\/\#!?\//, '/' );
 
 
@@ -12224,18 +12231,185 @@ var Toolbelt = {
 };
 
 module.exports = Toolbelt;
-},{}],"mox-toolbelt":[function(require,module,exports){
-module.exports=require('9CxDSh');
-},{}],"page":[function(require,module,exports){
-module.exports=require('4zGmvs');
-},{}],"4zGmvs":[function(require,module,exports){
+},{}],22:[function(require,module,exports){
+/**
+ * Expose `pathtoRegexp`.
+ */
+module.exports = pathtoRegexp;
+
+/**
+ * The main path matching regexp utility.
+ *
+ * @type {RegExp}
+ */
+var PATH_REGEXP = new RegExp([
+  // Match already escaped characters that would otherwise incorrectly appear
+  // in future matches. This allows the user to escape special characters that
+  // shouldn't be transformed.
+  '(\\\\.)',
+  // Match Express-style parameters and un-named parameters with a prefix
+  // and optional suffixes. Matches appear as:
+  //
+  // "/:test(\\d+)?" => ["/", "test", "\d+", undefined, "?"]
+  // "/route(\\d+)" => [undefined, undefined, undefined, "\d+", undefined]
+  '([\\/.])?(?:\\:(\\w+)(?:\\(((?:\\\\.|[^)])*)\\))?|\\(((?:\\\\.|[^)])*)\\))([+*?])?',
+  // Match regexp special characters that should always be escaped.
+  '([.+*?=^!:${}()[\\]|\\/])'
+].join('|'), 'g');
+
+/**
+ * Escape the capturing group by escaping special characters and meaning.
+ *
+ * @param  {String} group
+ * @return {String}
+ */
+function escapeGroup (group) {
+  return group.replace(/([=!:$\/()])/g, '\\$1');
+}
+
+/**
+ * Attach the keys as a property of the regexp.
+ *
+ * @param  {RegExp} re
+ * @param  {Array}  keys
+ * @return {RegExp}
+ */
+var attachKeys = function (re, keys) {
+  re.keys = keys;
+
+  return re;
+};
+
+/**
+ * Normalize the given path string, returning a regular expression.
+ *
+ * An empty array should be passed in, which will contain the placeholder key
+ * names. For example `/user/:id` will then contain `["id"]`.
+ *
+ * @param  {(String|RegExp|Array)} path
+ * @param  {Array}                 keys
+ * @param  {Object}                options
+ * @return {RegExp}
+ */
+function pathtoRegexp (path, keys, options) {
+  if (keys && !Array.isArray(keys)) {
+    options = keys;
+    keys = null;
+  }
+
+  keys = keys || [];
+  options = options || {};
+
+  var strict = options.strict;
+  var end = options.end !== false;
+  var flags = options.sensitive ? '' : 'i';
+  var index = 0;
+
+  if (path instanceof RegExp) {
+    // Match all capturing groups of a regexp.
+    var groups = path.source.match(/\((?!\?)/g) || [];
+
+    // Map all the matches to their numeric keys and push into the keys.
+    keys.push.apply(keys, groups.map(function (match, index) {
+      return {
+        name:      index,
+        delimiter: null,
+        optional:  false,
+        repeat:    false
+      };
+    }));
+
+    // Return the source back to the user.
+    return attachKeys(path, keys);
+  }
+
+  if (Array.isArray(path)) {
+    // Map array parts into regexps and return their source. We also pass
+    // the same keys and options instance into every generation to get
+    // consistent matching groups before we join the sources together.
+    path = path.map(function (value) {
+      return pathtoRegexp(value, keys, options).source;
+    });
+
+    // Generate a new regexp instance by joining all the parts together.
+    return attachKeys(new RegExp('(?:' + path.join('|') + ')', flags), keys);
+  }
+
+  // Alter the path string into a usable regexp.
+  path = path.replace(PATH_REGEXP, function (match, escaped, prefix, key, capture, group, suffix, escape) {
+    // Avoiding re-escaping escaped characters.
+    if (escaped) {
+      return escaped;
+    }
+
+    // Escape regexp special characters.
+    if (escape) {
+      return '\\' + escape;
+    }
+
+    var repeat   = suffix === '+' || suffix === '*';
+    var optional = suffix === '?' || suffix === '*';
+
+    keys.push({
+      name:      key || index++,
+      delimiter: prefix || '/',
+      optional:  optional,
+      repeat:    repeat
+    });
+
+    // Escape the prefix character.
+    prefix = prefix ? '\\' + prefix : '';
+
+    // Match using the custom capturing group, or fallback to capturing
+    // everything up to the next slash (or next period if the param was
+    // prefixed with a period).
+    capture = escapeGroup(capture || group || '[^' + (prefix || '\\/') + ']+?');
+
+    // Allow parameters to be repeated more than once.
+    if (repeat) {
+      capture = capture + '(?:' + prefix + capture + ')*';
+    }
+
+    // Allow a parameter to be optional.
+    if (optional) {
+      return '(?:' + prefix + '(' + capture + '))?';
+    }
+
+    // Basic parameter support.
+    return prefix + '(' + capture + ')';
+  });
+
+  // Check whether the path ends in a slash as it alters some match behaviour.
+  var endsWithSlash = path[path.length - 1] === '/';
+
+  // In non-strict mode we allow an optional trailing slash in the match. If
+  // the path to match already ended with a slash, we need to remove it for
+  // consistency. The slash is only valid at the very end of a path match, not
+  // anywhere in the middle. This is important for non-ending mode, otherwise
+  // "/test/" will match "/test//route".
+  if (!strict) {
+    path = (endsWithSlash ? path.slice(0, -2) : path) + '(?:\\/(?=$))?';
+  }
+
+  // In non-ending mode, we need prompt the capturing groups to match as much
+  // as possible by using a positive lookahead for the end or next path segment.
+  if (!end) {
+    path += strict && endsWithSlash ? '' : '(?=\\/|$)';
+  }
+
+  return attachKeys(new RegExp('^' + path + (end ? '$' : ''), flags), keys);
+};
+
+},{}],"c8LduW":[function(require,module,exports){
+(function (global){
+!function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.page=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
  /* jshint browser:true */
 
  /**
   * Module dependencies.
   */
 
- var pathtoRegexp = _dereq_('path-to-regexp');
+ var pathtoRegexp = require('path-to-regexp');
 
  /**
   * Module exports.
@@ -12805,7 +12979,181 @@ function removeEvent(obj, type, fn) {
     obj.detachEvent('on' + type, fn);
   }
 }
-},{}],24:[function(require,module,exports){
+},{"path-to-regexp":2}],2:[function(require,module,exports){
+/**
+ * Expose `pathtoRegexp`.
+ */
+module.exports = pathtoRegexp;
+
+/**
+ * The main path matching regexp utility.
+ *
+ * @type {RegExp}
+ */
+var PATH_REGEXP = new RegExp([
+  // Match already escaped characters that would otherwise incorrectly appear
+  // in future matches. This allows the user to escape special characters that
+  // shouldn't be transformed.
+  '(\\\\.)',
+  // Match Express-style parameters and un-named parameters with a prefix
+  // and optional suffixes. Matches appear as:
+  //
+  // "/:test(\\d+)?" => ["/", "test", "\d+", undefined, "?"]
+  // "/route(\\d+)" => [undefined, undefined, undefined, "\d+", undefined]
+  '([\\/.])?(?:\\:(\\w+)(?:\\(((?:\\\\.|[^)])*)\\))?|\\(((?:\\\\.|[^)])*)\\))([+*?])?',
+  // Match regexp special characters that should always be escaped.
+  '([.+*?=^!:${}()[\\]|\\/])'
+].join('|'), 'g');
+
+/**
+ * Escape the capturing group by escaping special characters and meaning.
+ *
+ * @param  {String} group
+ * @return {String}
+ */
+function escapeGroup (group) {
+  return group.replace(/([=!:$\/()])/g, '\\$1');
+}
+
+/**
+ * Attach the keys as a property of the regexp.
+ *
+ * @param  {RegExp} re
+ * @param  {Array}  keys
+ * @return {RegExp}
+ */
+var attachKeys = function (re, keys) {
+  re.keys = keys;
+
+  return re;
+};
+
+/**
+ * Normalize the given path string, returning a regular expression.
+ *
+ * An empty array should be passed in, which will contain the placeholder key
+ * names. For example `/user/:id` will then contain `["id"]`.
+ *
+ * @param  {(String|RegExp|Array)} path
+ * @param  {Array}                 keys
+ * @param  {Object}                options
+ * @return {RegExp}
+ */
+function pathtoRegexp (path, keys, options) {
+  if (keys && !Array.isArray(keys)) {
+    options = keys;
+    keys = null;
+  }
+
+  keys = keys || [];
+  options = options || {};
+
+  var strict = options.strict;
+  var end = options.end !== false;
+  var flags = options.sensitive ? '' : 'i';
+  var index = 0;
+
+  if (path instanceof RegExp) {
+    // Match all capturing groups of a regexp.
+    var groups = path.source.match(/\((?!\?)/g) || [];
+
+    // Map all the matches to their numeric keys and push into the keys.
+    keys.push.apply(keys, groups.map(function (match, index) {
+      return {
+        name:      index,
+        delimiter: null,
+        optional:  false,
+        repeat:    false
+      };
+    }));
+
+    // Return the source back to the user.
+    return attachKeys(path, keys);
+  }
+
+  if (Array.isArray(path)) {
+    // Map array parts into regexps and return their source. We also pass
+    // the same keys and options instance into every generation to get
+    // consistent matching groups before we join the sources together.
+    path = path.map(function (value) {
+      return pathtoRegexp(value, keys, options).source;
+    });
+
+    // Generate a new regexp instance by joining all the parts together.
+    return attachKeys(new RegExp('(?:' + path.join('|') + ')', flags), keys);
+  }
+
+  // Alter the path string into a usable regexp.
+  path = path.replace(PATH_REGEXP, function (match, escaped, prefix, key, capture, group, suffix, escape) {
+    // Avoiding re-escaping escaped characters.
+    if (escaped) {
+      return escaped;
+    }
+
+    // Escape regexp special characters.
+    if (escape) {
+      return '\\' + escape;
+    }
+
+    var repeat   = suffix === '+' || suffix === '*';
+    var optional = suffix === '?' || suffix === '*';
+
+    keys.push({
+      name:      key || index++,
+      delimiter: prefix || '/',
+      optional:  optional,
+      repeat:    repeat
+    });
+
+    // Escape the prefix character.
+    prefix = prefix ? '\\' + prefix : '';
+
+    // Match using the custom capturing group, or fallback to capturing
+    // everything up to the next slash (or next period if the param was
+    // prefixed with a period).
+    capture = escapeGroup(capture || group || '[^' + (prefix || '\\/') + ']+?');
+
+    // Allow parameters to be repeated more than once.
+    if (repeat) {
+      capture = capture + '(?:' + prefix + capture + ')*';
+    }
+
+    // Allow a parameter to be optional.
+    if (optional) {
+      return '(?:' + prefix + '(' + capture + '))?';
+    }
+
+    // Basic parameter support.
+    return prefix + '(' + capture + ')';
+  });
+
+  // Check whether the path ends in a slash as it alters some match behaviour.
+  var endsWithSlash = path[path.length - 1] === '/';
+
+  // In non-strict mode we allow an optional trailing slash in the match. If
+  // the path to match already ended with a slash, we need to remove it for
+  // consistency. The slash is only valid at the very end of a path match, not
+  // anywhere in the middle. This is important for non-ending mode, otherwise
+  // "/test/" will match "/test//route".
+  if (!strict) {
+    path = (endsWithSlash ? path.slice(0, -2) : path) + '(?:\\/(?=$))?';
+  }
+
+  // In non-ending mode, we need prompt the capturing groups to match as much
+  // as possible by using a positive lookahead for the end or next path segment.
+  if (!end) {
+    path += strict && endsWithSlash ? '' : '(?=\\/|$)';
+  }
+
+  return attachKeys(new RegExp('^' + path + (end ? '$' : ''), flags), keys);
+};
+
+},{}]},{},[1])(1)
+});
+}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"path-to-regexp":22}],"page":[function(require,module,exports){
+module.exports=require('c8LduW');
+},{}],25:[function(require,module,exports){
 "use strict";
 
 var utils = require('./utils');
@@ -13571,7 +13919,7 @@ AbstractPouchDB.prototype.registerDependentDatabase =
   });
 });
 
-},{"./changes":29,"./deps/errors":34,"./deps/upsert":36,"./merge":42,"./utils":47,"events":4}],25:[function(require,module,exports){
+},{"./changes":30,"./deps/errors":35,"./deps/upsert":37,"./merge":43,"./utils":48,"events":4}],26:[function(require,module,exports){
 "use strict";
 
 var CHANGES_BATCH_SIZE = 25;
@@ -14519,7 +14867,7 @@ HttpPouch.valid = function () {
 
 module.exports = HttpPouch;
 
-},{"../deps/errors":34,"../utils":47}],26:[function(require,module,exports){
+},{"../deps/errors":35,"../utils":48}],27:[function(require,module,exports){
 (function (process,global){
 'use strict';
 
@@ -15757,9 +16105,9 @@ IdbPouch.Changes = new utils.Changes();
 module.exports = IdbPouch;
 
 }).call(this,require("FWaASH"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../deps/errors":34,"../merge":42,"../utils":47,"FWaASH":5}],27:[function(require,module,exports){
+},{"../deps/errors":35,"../merge":43,"../utils":48,"FWaASH":5}],28:[function(require,module,exports){
 module.exports = ['idb', 'websql'];
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -17020,7 +17368,7 @@ WebSqlPouch.Changes = new utils.Changes();
 module.exports = WebSqlPouch;
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../deps/errors":34,"../merge":42,"../utils":47}],29:[function(require,module,exports){
+},{"../deps/errors":35,"../merge":43,"../utils":48}],30:[function(require,module,exports){
 'use strict';
 var utils = require('./utils');
 var merge = require('./merge');
@@ -17283,7 +17631,7 @@ Changes.prototype.filterChanges = function (opts) {
     });
   }
 };
-},{"./deps/errors":34,"./evalFilter":38,"./evalView":39,"./merge":42,"./utils":47,"events":4}],30:[function(require,module,exports){
+},{"./deps/errors":35,"./evalFilter":39,"./evalView":40,"./merge":43,"./utils":48,"events":4}],31:[function(require,module,exports){
 (function (global){
 /*globals cordova */
 "use strict";
@@ -17449,7 +17797,7 @@ function PouchDB(name, opts, callback) {
 module.exports = PouchDB;
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./adapter":24,"./taskqueue":46,"./utils":47}],31:[function(require,module,exports){
+},{"./adapter":25,"./taskqueue":47,"./utils":48}],32:[function(require,module,exports){
 "use strict";
 
 var createBlob = require('./blob.js');
@@ -17694,7 +18042,7 @@ function ajax(options, adapterCallback) {
 
 module.exports = ajax;
 
-},{"../utils":47,"./blob.js":32,"./errors":34}],32:[function(require,module,exports){
+},{"../utils":48,"./blob.js":33,"./errors":35}],33:[function(require,module,exports){
 (function (global){
 "use strict";
 
@@ -17726,7 +18074,7 @@ module.exports = createBlob;
 
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 'use strict';
 exports.Map = LazyMap; // TODO: use ES6 map
 exports.Set = LazySet; // TODO: use ES6 set
@@ -17790,7 +18138,7 @@ LazySet.prototype.has = function (key) {
 LazySet.prototype["delete"] = function (key) {
   return this.store["delete"](key);
 };
-},{}],34:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 "use strict";
 
 function PouchError(opts) {
@@ -17921,7 +18269,7 @@ exports.error = function (error, reason, name) {
   return new CustomPouchError(reason);
 };
 
-},{}],35:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 (function (process,global){
 'use strict';
 
@@ -17995,7 +18343,7 @@ module.exports = function (data, callback) {
 };
 
 }).call(this,require("FWaASH"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"FWaASH":5,"crypto":3,"spark-md5":77}],36:[function(require,module,exports){
+},{"FWaASH":5,"crypto":3,"spark-md5":78}],37:[function(require,module,exports){
 'use strict';
 var Promise = require('../utils').Promise;
 
@@ -18046,7 +18394,7 @@ module.exports = function (db, docId, diffFun, cb) {
   }
 };
 
-},{"../utils":47}],37:[function(require,module,exports){
+},{"../utils":48}],38:[function(require,module,exports){
 "use strict";
 
 // BEGIN Math.uuid.js
@@ -18131,7 +18479,7 @@ function uuid(len, radix) {
 module.exports = uuid;
 
 
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 'use strict';
 
 module.exports = evalFilter;
@@ -18143,7 +18491,7 @@ function evalFilter(input) {
     ' })()'
   ].join(''));
 }
-},{}],39:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 'use strict';
 
 module.exports = evalView;
@@ -18197,7 +18545,7 @@ if (!process.browser) {
 }
 
 }).call(this,require("FWaASH"))
-},{"./adapters/http":25,"./adapters/idb":26,"./adapters/leveldb":3,"./adapters/websql":28,"./deps/ajax":31,"./deps/errors":34,"./replicate":43,"./setup":44,"./sync":45,"./utils":47,"./version":48,"FWaASH":5,"pouchdb-extend":68,"pouchdb-mapreduce":71}],42:[function(require,module,exports){
+},{"./adapters/http":26,"./adapters/idb":27,"./adapters/leveldb":3,"./adapters/websql":29,"./deps/ajax":32,"./deps/errors":35,"./replicate":44,"./setup":45,"./sync":46,"./utils":48,"./version":49,"FWaASH":5,"pouchdb-extend":69,"pouchdb-mapreduce":72}],43:[function(require,module,exports){
 'use strict';
 var extend = require('pouchdb-extend');
 
@@ -18473,7 +18821,7 @@ PouchMerge.rootToLeaf = function (tree) {
 
 module.exports = PouchMerge;
 
-},{"pouchdb-extend":68}],43:[function(require,module,exports){
+},{"pouchdb-extend":69}],44:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -19037,7 +19385,7 @@ function replicateWrapper(src, target, opts, callback) {
 
 exports.replicate = replicateWrapper;
 
-},{"./index":"S6KqvD","./utils":47,"events":4}],44:[function(require,module,exports){
+},{"./index":"S6KqvD","./utils":48,"events":4}],45:[function(require,module,exports){
 (function (global){
 "use strict";
 
@@ -19251,7 +19599,7 @@ PouchDB.defaults = function (defaultOpts) {
 module.exports = PouchDB;
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./adapters/preferredAdapters.js":27,"./constructor":30,"./utils":47,"events":4}],45:[function(require,module,exports){
+},{"./adapters/preferredAdapters.js":28,"./constructor":31,"./utils":48,"events":4}],46:[function(require,module,exports){
 'use strict';
 var utils = require('./utils');
 var replicate = require('./replicate').replicate;
@@ -19407,7 +19755,7 @@ Sync.prototype.cancel = function () {
     this.pull.cancel();
   }
 };
-},{"./replicate":43,"./utils":47,"events":4}],46:[function(require,module,exports){
+},{"./replicate":44,"./utils":48,"events":4}],47:[function(require,module,exports){
 'use strict';
 
 module.exports = TaskQueue;
@@ -19477,7 +19825,7 @@ TaskQueue.prototype.addTask = function (name, parameters) {
   }
 };
 
-},{}],47:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 (function (process,global){
 /*jshint strict: false */
 /*global chrome */
@@ -20035,10 +20383,10 @@ exports.cancellableFun = function (fun, self, opts) {
 
 exports.MD5 = exports.toPromise(require('./deps/md5'));
 }).call(this,require("FWaASH"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./deps/ajax":31,"./deps/blob":32,"./deps/buffer":3,"./deps/collections":33,"./deps/errors":34,"./deps/md5":35,"./deps/uuid":37,"./merge":42,"FWaASH":5,"argsarray":49,"bluebird":54,"events":4,"inherits":50,"pouchdb-extend":68}],48:[function(require,module,exports){
+},{"./deps/ajax":32,"./deps/blob":33,"./deps/buffer":3,"./deps/collections":34,"./deps/errors":35,"./deps/md5":36,"./deps/uuid":38,"./merge":43,"FWaASH":5,"argsarray":50,"bluebird":55,"events":4,"inherits":51,"pouchdb-extend":69}],49:[function(require,module,exports){
 module.exports = "3.0.0";
 
-},{}],49:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 'use strict';
 
 module.exports = argsArray;
@@ -20058,7 +20406,7 @@ function argsArray(fun) {
     }
   };
 }
-},{}],50:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -20083,13 +20431,13 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],51:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 'use strict';
 
 module.exports = INTERNAL;
 
 function INTERNAL() {}
-},{}],52:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 'use strict';
 var Promise = require('./promise');
 var reject = require('./reject');
@@ -20133,7 +20481,7 @@ module.exports = function all(iterable) {
     }
   }
 };
-},{"./INTERNAL":51,"./handlers":53,"./promise":55,"./reject":57,"./resolve":58}],53:[function(require,module,exports){
+},{"./INTERNAL":52,"./handlers":54,"./promise":56,"./reject":58,"./resolve":59}],54:[function(require,module,exports){
 'use strict';
 var tryCatch = require('./tryCatch');
 var resolveThenable = require('./resolveThenable');
@@ -20179,13 +20527,13 @@ function getThen(obj) {
     };
   }
 }
-},{"./resolveThenable":59,"./states":60,"./tryCatch":61}],54:[function(require,module,exports){
+},{"./resolveThenable":60,"./states":61,"./tryCatch":62}],55:[function(require,module,exports){
 module.exports = exports = require('./promise');
 
 exports.resolve = require('./resolve');
 exports.reject = require('./reject');
 exports.all = require('./all');
-},{"./all":52,"./promise":55,"./reject":57,"./resolve":58}],55:[function(require,module,exports){
+},{"./all":53,"./promise":56,"./reject":58,"./resolve":59}],56:[function(require,module,exports){
 'use strict';
 
 var unwrap = require('./unwrap');
@@ -20231,7 +20579,7 @@ Promise.prototype.then = function (onFulfilled, onRejected) {
   return promise;
 };
 
-},{"./INTERNAL":51,"./queueItem":56,"./resolveThenable":59,"./states":60,"./unwrap":62}],56:[function(require,module,exports){
+},{"./INTERNAL":52,"./queueItem":57,"./resolveThenable":60,"./states":61,"./unwrap":63}],57:[function(require,module,exports){
 'use strict';
 var handlers = require('./handlers');
 var unwrap = require('./unwrap');
@@ -20260,7 +20608,7 @@ QueueItem.prototype.callRejected = function (value) {
 QueueItem.prototype.otherCallRejected = function (value) {
   unwrap(this.promise, this.onRejected, value);
 };
-},{"./handlers":53,"./unwrap":62}],57:[function(require,module,exports){
+},{"./handlers":54,"./unwrap":63}],58:[function(require,module,exports){
 'use strict';
 
 var Promise = require('./promise');
@@ -20272,7 +20620,7 @@ function reject(reason) {
 	var promise = new Promise(INTERNAL);
 	return handlers.reject(promise, reason);
 }
-},{"./INTERNAL":51,"./handlers":53,"./promise":55}],58:[function(require,module,exports){
+},{"./INTERNAL":52,"./handlers":54,"./promise":56}],59:[function(require,module,exports){
 'use strict';
 
 var Promise = require('./promise');
@@ -20307,7 +20655,7 @@ function resolve(value) {
       return EMPTYSTRING;
   }
 }
-},{"./INTERNAL":51,"./handlers":53,"./promise":55}],59:[function(require,module,exports){
+},{"./INTERNAL":52,"./handlers":54,"./promise":56}],60:[function(require,module,exports){
 'use strict';
 var handlers = require('./handlers');
 var tryCatch = require('./tryCatch');
@@ -20340,13 +20688,13 @@ function safelyResolveThenable(self, thenable) {
   }
 }
 exports.safely = safelyResolveThenable;
-},{"./handlers":53,"./tryCatch":61}],60:[function(require,module,exports){
+},{"./handlers":54,"./tryCatch":62}],61:[function(require,module,exports){
 // Lazy man's symbols for states
 
 exports.REJECTED = ['REJECTED'];
 exports.FULFILLED = ['FULFILLED'];
 exports.PENDING = ['PENDING'];
-},{}],61:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 'use strict';
 
 module.exports = tryCatch;
@@ -20362,7 +20710,7 @@ function tryCatch(func, value) {
   }
   return out;
 }
-},{}],62:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 'use strict';
 
 var immediate = require('immediate');
@@ -20384,7 +20732,7 @@ function unwrap(promise, func, value) {
     }
   });
 }
-},{"./handlers":53,"immediate":63}],63:[function(require,module,exports){
+},{"./handlers":54,"immediate":64}],64:[function(require,module,exports){
 'use strict';
 var types = [
   require('./nextTick'),
@@ -20425,7 +20773,7 @@ function immediate(task) {
     scheduleDrain();
   }
 }
-},{"./messageChannel":64,"./mutation.js":65,"./nextTick":3,"./stateChange":66,"./timeout":67}],64:[function(require,module,exports){
+},{"./messageChannel":65,"./mutation.js":66,"./nextTick":3,"./stateChange":67,"./timeout":68}],65:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -20446,7 +20794,7 @@ exports.install = function (func) {
   };
 };
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],65:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 (function (global){
 'use strict';
 //based off rsvp https://github.com/tildeio/rsvp.js
@@ -20471,7 +20819,7 @@ exports.install = function (handle) {
   };
 };
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],66:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -20498,7 +20846,7 @@ exports.install = function (handle) {
   };
 };
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],67:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 'use strict';
 exports.test = function () {
   return true;
@@ -20509,7 +20857,7 @@ exports.install = function (t) {
     setTimeout(t, 0);
   };
 };
-},{}],68:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 "use strict";
 
 // Extends method
@@ -20657,7 +21005,7 @@ module.exports = extend;
 
 
 
-},{}],69:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 'use strict';
 
 var upsert = require('./upsert');
@@ -20736,7 +21084,7 @@ module.exports = function (opts) {
   });
 };
 
-},{"./upsert":75,"./utils":76}],70:[function(require,module,exports){
+},{"./upsert":76,"./utils":77}],71:[function(require,module,exports){
 'use strict';
 
 module.exports = function (func, emit, sum, log, isArray, toJSON) {
@@ -20744,7 +21092,7 @@ module.exports = function (func, emit, sum, log, isArray, toJSON) {
   return eval("'use strict'; (" + func.replace(/;\s*$/, "") + ");");
 };
 
-},{}],71:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -21490,7 +21838,7 @@ function NotFoundError(message) {
 utils.inherits(NotFoundError, Error);
 
 }).call(this,require("FWaASH"))
-},{"./create-view":69,"./evalfunc":70,"./taskqueue":74,"./utils":76,"FWaASH":5,"pouchdb-collate":72}],72:[function(require,module,exports){
+},{"./create-view":70,"./evalfunc":71,"./taskqueue":75,"./utils":77,"FWaASH":5,"pouchdb-collate":73}],73:[function(require,module,exports){
 'use strict';
 
 var MIN_MAGNITUDE = -324; // verified by -Number.MIN_VALUE
@@ -21713,7 +22061,7 @@ function numToIndexableString(num) {
   return result;
 }
 
-},{"./utils":73}],73:[function(require,module,exports){
+},{"./utils":74}],74:[function(require,module,exports){
 'use strict';
 
 function pad(str, padWith, upToLength) {
@@ -21784,7 +22132,7 @@ exports.intToDecimalForm = function (int) {
 
   return result;
 };
-},{}],74:[function(require,module,exports){
+},{}],75:[function(require,module,exports){
 'use strict';
 /*
  * Simple task queue to sequentialize actions. Assumes callbacks will eventually fire (once).
@@ -21809,7 +22157,7 @@ TaskQueue.prototype.finish = function () {
 
 module.exports = TaskQueue;
 
-},{"./utils":76}],75:[function(require,module,exports){
+},{"./utils":77}],76:[function(require,module,exports){
 'use strict';
 var Promise = require('./utils').Promise;
 
@@ -21852,7 +22200,7 @@ function tryAndPut(db, doc, diffFun) {
 
 module.exports = upsert;
 
-},{"./utils":76}],76:[function(require,module,exports){
+},{"./utils":77}],77:[function(require,module,exports){
 (function (process,global){
 'use strict';
 /* istanbul ignore if */
@@ -21943,7 +22291,7 @@ exports.MD5 = function (string) {
   }
 };
 }).call(this,require("FWaASH"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"FWaASH":5,"argsarray":49,"crypto":3,"inherits":50,"lie":54,"pouchdb-extend":68,"spark-md5":77}],77:[function(require,module,exports){
+},{"FWaASH":5,"argsarray":50,"crypto":3,"inherits":51,"lie":55,"pouchdb-extend":69,"spark-md5":78}],78:[function(require,module,exports){
 /*jshint bitwise:false*/
 /*global unescape*/
 
@@ -36330,7 +36678,7 @@ request.put = function(url, data, fn){
 
 module.exports = request;
 
-},{"emitter":86,"reduce":87}],86:[function(require,module,exports){
+},{"emitter":87,"reduce":88}],87:[function(require,module,exports){
 
 /**
  * Expose `Emitter`.
@@ -36496,7 +36844,7 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-},{}],87:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 
 /**
  * Reduce `arr` with `fn`.
